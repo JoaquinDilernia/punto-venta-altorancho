@@ -16,7 +16,7 @@ export async function api(path, { method = 'GET', body } = {}) {
     clearSession(role);
     window.location.reload();
   }
-  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  if (!res.ok) throw Object.assign(new Error(data.error || `Error ${res.status}`), { status: res.status });
   return data;
 }
 
