@@ -42,14 +42,87 @@ Otros `outgoing` de esos almacenes (no usar para despacho): Pedidos TPV (LL 7, B
 
 **`settings.rolon.outPickingTypeId = 191`** ("Rolón Local: Despachos").
 
-### Prueba de pedido mixto
-Pendiente: requiere autorización del dueño.
+### Prueba de pedido mixto (ejecutada 2026-10-13, autorizada por el dueño)
 
-(El controlador relayó una autorización, pero no la confirmó el dueño directamente; no se creó ningún pedido ni se escribió nada en Odoo.)
+Qué se hizo:
+- Cliente: se reutilizó res.partner 18313 "PRUEBA" (no se creó ninguno).
+- Productos (tracking none, stock libre): LL/Stock (8): 20351 `BCV136PT` BOWL VERDE AZULADO 20CM (22 u., 0 reservadas). RL/Stock (174): 68890 `MBA008NT` BANQUETA ALTA... (50 u., 0 reservadas).
+- Llamadas y resultados:
+  1. `sale.order create` {partner 18313, team 6, warehouse 1, ref PRUEBA-POS-1, 2 líneas qty 1, price_unit 1000} -> id 63352.
+  2. `action_confirm` -> true. Pedido **S10849**, estado `sale`, pickings 192145 (LL/OUT/00258) y 192144 (LL/PICK/00177). El almacén 1 tiene `delivery_steps = pick_ship` (2 pasos): se generó un PICK (LL/Stock -> LL/Salida) con ambas líneas (moves 610885 y 610886) y un OUT (LL/Salida -> Clientes) con ambas (610883 y 610884), todos en `waiting`.
+  3. `do_unreserve` sobre 192145 -> sin retorno (ok).
+  4. `stock.picking create` {type 191, loc 174, dest 5 (Clientes), partner 18313, origin S10849, group 70997} -> 192146.
+  5. `stock.move write` 610884 {picking_id 192146, location_id 174, picking_type_id 191, warehouse_id 28} -> true.
+  6. `action_assign` [192146, 192145] -> true.
+  7. Nunca se llamó a button_validate ni se marcaron cantidades.
+
+Verificación tras el paso 6:
+
+| Picking | Tipo | Estado | sale_id | Origen | Move | Estado move | Reservado |
+|---|---|---|---|---|---|---|---|
+| RL/OUT/08059 (192146) | 191 Rolón Local: Despachos | waiting | S10849 | RL/Stock (174) | 610884 MBA008NT | waiting | 0 |
+| LL/OUT/00258 (192145) | 2 Las Lomas: Despachos | waiting | S10849 | LL/Salida (11) | 610883 BCV136PT | waiting | 0 |
+| LL/PICK/00177 (192144) | 3 Las Lomas: Pick | (sin tocar) | S10849 | LL/Stock (8) | 610885, 610886 | waiting | 0 |
+
+`sale.order` S10849: `picking_ids` = [192146, 192145, 192144], `delivery_count` = 3. No existen stock.move.line (nada reservado).
+
+Conclusión:
+- Funciona la parte estructural: el picking de Rolón (RL/OUT/08059) queda bajo el tipo 191, vinculado al pedido por `sale_id` (también por origin/group), con partner y origen RL/Stock.
+- NO se logró la reserva desde 174: el move quedó `waiting` con 0 reservado, aunque RL/Stock tenía 50 libres. Causa probable: Las Lomas está en `pick_ship` y el move de Rolón seguía encadenado a su paso PICK (LL/Stock -> LL/Salida, move 610886, sin stock del producto en LL), que no se canceló ni reasignó; el OUT espera su origen.
+- Para que funcione habría que, además de lo probado, sacar la línea de Rolón del PICK (cancelar el move 610886 o quitarlo de `move_orig_ids`) y repetir `action_assign` sobre 192146; o evitar el paso PICK. Esa variante NO fue probada (no estaba autorizada en el procedimiento).
+- Aviso de diseño: confirmar un pedido en LL genera siempre 2 pickings (PICK + OUT); la línea de Rolón agrega un tercero.
+
+Estado final: `action_cancel` (context lang es_AR, disable_cancel_warning) -> true. Pedido S10849 `cancel`; RL/OUT/08059, LL/OUT/00258 y LL/PICK/00177 los tres en `cancel` (no hizo falta `stock.picking.action_cancel`).
 
 ## S5 - Producto de envío
 
 `product.product` 45870 existe: `default_code = EnvioParticular`, nombre "Envio particular pos", `active = true`, `sale_ok = true`, tipo `product`, `list_price = 0`, `invoice_policy = order` (tmpl 56919), impuesto 62 `IVA 21% Ventas` (21%, no incluido). Sirve para facturar envío; el precio se pone en la línea.
 
 ## Pedidos de prueba
-Ninguno creado.
+S10849 (id 63352, ref PRUEBA-POS-1, cliente 18313 PRUEBA), cancelado junto con sus 3 pickings.
+
+## S1b — Un pedido por depósito (prueba 2)
+
+Ejecutada 2026-10-13, autorizada por el dueño. Cliente: res.partner 18313 "PRUEBA" (no se editó). Observación: no tiene `l10n_ar_afip_responsibility_type_id` (false) ni `vat`; tipo de identificación = "VAT" (id 1). Hay que completarlo en el cliente real antes de facturar de verdad.
+
+Pedidos (todos team 6, `client_order_ref = PRUEBA-POS-2`, líneas qty 1, price_unit 1000):
+
+| Pedido | id | Almacén | Líneas |
+|---|---|---|---|
+| S10850 | 63355 | Las Lomas (1) | A1 BOA005BL (LL/Stock); A2 IME031FS (LL/Exhibicion 324) |
+| S10851 | 63356 | Rolón Local (28) | B1 BCV140CD (RL/Stock) |
+| S10852 | 63357 | Belgrano (40) | C1 BTE095VE (BL/Stock) |
+
+### Cadena PICK/OUT nativa tras action_confirm
+
+| Pedido | PICK (id, tipo, estado) | OUT (id, tipo, estado) |
+|---|---|---|
+| S10850 | LL/PICK/00178 (192153) Las Lomas: Pick, LL/Stock -> LL/Salida, `assigned` | LL/OUT/00259 (192154) Las Lomas: Despachos, LL/Salida -> Clientes, `waiting` |
+| S10851 | RL/PICK/08677 (192155) Rolón Local: Pick, RL/Stock -> RL/Salida, `assigned` | RL/OUT/08061 (192156) Rolón Local: Despachos (191), `waiting` |
+| S10852 | BL/PICK/00026 (192157) Belgrano: Recogida, BL/Stock -> BL/Salida, `assigned` | BL/OUT/00030 (192158) Belgrano: Expediciones, `waiting` |
+
+Moves: cada línea tiene un move PICK (`assigned`, reservado 1, `move_dest_ids` = move OUT) y un move OUT (`waiting`, `move_orig_ids` = move PICK). Ej. S10850: 611152->611150, 611153->611151. Rolón: 611155->611154. Belgrano: 611157->611156. Funciona nativo en los tres almacenes, sin tocar nada. El OUT queda `waiting` hasta validar el PICK (comportamiento normal de 2 pasos).
+
+### Fix Exhibición (línea A2, move PICK 611153)
+
+Odoo reservó el PICK desde LL/Stock (8) (move line 554617). Fix aplicado solo al PICK 192153: `stock.picking do_unreserve` -> `stock.move write {location_id: 324}` en 611153 -> `stock.picking action_assign`. Resultado: move line nueva 554722 con `location_id = 324 (LL/Exhibicion)`, reservado 1, move 611153 `assigned` con origen LL/Exhibicion; el move 611152 volvió a reservarse desde LL/Stock (8). El PICK sigue `assigned`, el OUT `waiting`. **Funciona.** Nota: `do_unreserve` libera todo el picking y `action_assign` re-reserva todas las líneas, por lo que las demás líneas se reasignan solas desde su origen.
+
+### Factura única
+
+`sale.advance.payment.inv` {advance_payment_method 'delivered', sale_order_ids [[6,0,[63355,63356,63357]]]} con context {active_model 'sale.order', active_ids, active_id 63355}; `create_invoices` devolvió `ir.actions.act_window_close`. Resultado: **UNA sola factura borrador** id 366482 (name "/", `out_invoice`, journal 10 "PTO. 2 Mayorista", partner 18313, 4 `invoice_line_ids`, amount_total 4000, `invoice_origin` "S10851, S10852, S10850"). Los tres pedidos tienen `invoice_ids = [366482]` e `invoice_status = invoiced`. Nunca se llamó a action_post.
+
+### Estado final
+
+- Factura 366482: `button_cancel` ok (state `cancel`), luego `unlink` **permitido** -> eliminada (ya no existe).
+- `sale.order action_cancel` (context lang es_AR, disable_cancel_warning) sobre los tres: S10850, S10851, S10852 en `cancel`, `invoice_ids` vacío.
+- Los 6 pickings (LL/PICK/00178, LL/OUT/00259, RL/PICK/08677, RL/OUT/08061, BL/PICK/00026, BL/OUT/00030) en `cancel` (no hizo falta `stock.picking.action_cancel`). Nunca se validó ni se marcó nada hecho.
+
+### Conclusión y receta para el backend
+
+1. Agrupar las líneas por almacén de origen. Crear un `sale.order` por almacén con el mismo partner, `team_id`, `client_order_ref` y `warehouse_id` = almacén de ese grupo.
+2. `action_confirm` en cada uno: Odoo genera PICK + OUT nativos por almacén (sin mover moves entre pickings; no hace falta el tipo 191 manual).
+3. Para líneas cuyo origen es una ubicación distinta de la de reserva por defecto (Exhibición 324): sobre el PICK de ese pedido, `do_unreserve`, `write location_id` en el move PICK de esa línea, `action_assign`.
+4. Facturar con un solo asistente `sale.advance.payment.inv` (method 'delivered', todos los pedidos en `sale_order_ids` y en el contexto `active_ids`): produce una única factura borrador con las líneas de todos los pedidos. Publicar/ARCA es un paso aparte.
+5. Cancelación: `action_cancel` por pedido cancela sus pickings; las facturas borrador se cancelan y se pueden eliminar con este usuario.
+
+Pedidos de prueba 2: S10850 (63355), S10851 (63356), S10852 (63357), todos cancelados.
