@@ -1,6 +1,6 @@
 # Spikes de Odoo para el POS de locales (2026-10-13)
 
-Todo en solo lectura (search_read / read / read_group / search_count). Odoo 16.
+S3, S2 y S5 en solo lectura (search_read / read / read_group / search_count). S1 y S1b incluyen escrituras autorizadas por el dueño sobre pedidos de prueba, todas revertidas (cancelación). Odoo 16.
 
 ## S3 - Precio full vs promocional
 
@@ -24,7 +24,7 @@ Conteo de `invoice_policy` en `product.template` con `sale_ok = true` (total 705
 - `order`: 7048
 - `delivery`: 2 (id 57030 `BOB007GC` TOALLA GRIS CLARO DE BAÑO 480GR 30X45CM, tipo product; id 84531 `Service on Timesheet`, servicio interno)
 - sin valor (false): 2 (`DISC` id 84635, `TIPS` id 84634, tipo consu, de Odoo)
-- Por tipo: product/order 6862, product/delivery 1, consu/order 93, service/order 93.
+- Por tipo/política: product/order 6862, product/delivery 1, consu/order 93, consu/sin valor 2, service/order 93, service/delivery 1 (suma 7052).
 - Los 10 SKUs de muestra: todos `order`.
 
 Decisión: con `order` el asistente `sale.advance.payment.inv` (`advance_payment_method: 'delivered'`) factura lo pedido aunque no esté entregado. Cubre el 99,9%. **Pedir a un admin de Odoo que pase BOB007GC (tmpl 57030) a `order`**; hasta entonces el backend debe detectar la política de las líneas y avisar/bloquear ese SKU. El usuario de la API no debe cambiar productos.
@@ -71,6 +71,7 @@ Conclusión:
 - NO se logró la reserva desde 174: el move quedó `waiting` con 0 reservado, aunque RL/Stock tenía 50 libres. Causa probable: Las Lomas está en `pick_ship` y el move de Rolón seguía encadenado a su paso PICK (LL/Stock -> LL/Salida, move 610886, sin stock del producto en LL), que no se canceló ni reasignó; el OUT espera su origen.
 - Para que funcione habría que, además de lo probado, sacar la línea de Rolón del PICK (cancelar el move 610886 o quitarlo de `move_orig_ids`) y repetir `action_assign` sobre 192146; o evitar el paso PICK. Esa variante NO fue probada (no estaba autorizada en el procedimiento).
 - Aviso de diseño: confirmar un pedido en LL genera siempre 2 pickings (PICK + OUT); la línea de Rolón agrega un tercero.
+- **Superado por el enfoque A** (decisión del dueño 2026-10-13, ver S1b): un pedido por depósito de origen, con PICK+OUT nativos. El tipo 191 es simplemente el OUT nativo de Rolón (dato informativo); el backend ya no crea pickings a mano.
 
 Estado final: `action_cancel` (context lang es_AR, disable_cancel_warning) -> true. Pedido S10849 `cancel`; RL/OUT/08059, LL/OUT/00258 y LL/PICK/00177 los tres en `cancel` (no hizo falta `stock.picking.action_cancel`).
 
@@ -97,9 +98,9 @@ Pedidos (todos team 6, `client_order_ref = PRUEBA-POS-2`, líneas qty 1, price_u
 
 | Pedido | PICK (id, tipo, estado) | OUT (id, tipo, estado) |
 |---|---|---|
-| S10850 | LL/PICK/00178 (192153) Las Lomas: Pick, LL/Stock -> LL/Salida, `assigned` | LL/OUT/00259 (192154) Las Lomas: Despachos, LL/Salida -> Clientes, `waiting` |
-| S10851 | RL/PICK/08677 (192155) Rolón Local: Pick, RL/Stock -> RL/Salida, `assigned` | RL/OUT/08061 (192156) Rolón Local: Despachos (191), `waiting` |
-| S10852 | BL/PICK/00026 (192157) Belgrano: Recogida, BL/Stock -> BL/Salida, `assigned` | BL/OUT/00030 (192158) Belgrano: Expediciones, `waiting` |
+| S10850 | LL/PICK/00178 (192153) Las Lomas: Pick (tipo 3), LL/Stock -> LL/Salida, `assigned` | LL/OUT/00259 (192154) Las Lomas: Despachos (tipo 2), LL/Salida -> Clientes, `waiting` |
+| S10851 | RL/PICK/08677 (192155) Rolón Local: Pick (tipo 192), RL/Stock -> RL/Salida, `assigned` | RL/OUT/08061 (192156) Rolón Local: Despachos (191), `waiting` |
+| S10852 | BL/PICK/00026 (192157) Belgrano: Recogida (tipo 305), BL/Stock -> BL/Salida, `assigned` | BL/OUT/00030 (192158) Belgrano: Expediciones (tipo 304), `waiting` |
 
 Moves: cada línea tiene un move PICK (`assigned`, reservado 1, `move_dest_ids` = move OUT) y un move OUT (`waiting`, `move_orig_ids` = move PICK). Ej. S10850: 611152->611150, 611153->611151. Rolón: 611155->611154. Belgrano: 611157->611156. Funciona nativo en los tres almacenes, sin tocar nada. El OUT queda `waiting` hasta validar el PICK (comportamiento normal de 2 pasos).
 
@@ -119,10 +120,10 @@ Odoo reservó el PICK desde LL/Stock (8) (move line 554617). Fix aplicado solo a
 
 ### Conclusión y receta para el backend
 
-1. Agrupar las líneas por almacén de origen. Crear un `sale.order` por almacén con el mismo partner, `team_id`, `client_order_ref` y `warehouse_id` = almacén de ese grupo.
+1. Agrupar las líneas por almacén de origen. Crear un `sale.order` por almacén con el mismo partner y `client_order_ref`. **`team_id` sale del local que vende (no del almacén de origen): todos los pedidos de una misma venta usan el equipo del local vendedor; solo varía `warehouse_id` (= almacén de origen del grupo).** En la prueba se usó team 6 para los tres, coherente con esto.
 2. `action_confirm` en cada uno: Odoo genera PICK + OUT nativos por almacén (sin mover moves entre pickings; no hace falta el tipo 191 manual).
 3. Para líneas cuyo origen es una ubicación distinta de la de reserva por defecto (Exhibición 324): sobre el PICK de ese pedido, `do_unreserve`, `write location_id` en el move PICK de esa línea, `action_assign`.
-4. Facturar con un solo asistente `sale.advance.payment.inv` (method 'delivered', todos los pedidos en `sale_order_ids` y en el contexto `active_ids`): produce una única factura borrador con las líneas de todos los pedidos. Publicar/ARCA es un paso aparte.
+4. Facturar con un solo asistente `sale.advance.payment.inv` (method 'delivered', todos los pedidos en `sale_order_ids` y en el contexto `active_ids`): produce una única factura borrador con las líneas de todos los pedidos. **El diario de la factura es el del local vendedor (LL 32, BL 65, AL 78), no el de los almacenes de origen: hay que escribir `journal_id` en la factura mientras está en borrador (como hace `postInvoice` de la feria) antes de publicar.** La factura de prueba tomó el diario por defecto 10 "PTO. 2 Mayorista", que no es el correcto. Publicar/ARCA es un paso aparte.
 5. Cancelación: `action_cancel` por pedido cancela sus pickings; las facturas borrador se cancelan y se pueden eliminar con este usuario.
 
 Pedidos de prueba 2: S10850 (63355), S10851 (63356), S10852 (63357), todos cancelados.
