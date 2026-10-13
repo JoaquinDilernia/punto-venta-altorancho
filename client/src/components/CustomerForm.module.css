@@ -1,0 +1,12 @@
+/* Compartido por CustomerForm y ShippingFields. */
+.form { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); }
+.title { padding: 0 var(--s-2); font-size: var(--fs-lg); font-weight: 600; }
+.docRow { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2); align-items: end; }
+.grid { display: grid; grid-template-columns: 1fr; gap: var(--s-3); }
+.wide { grid-column: 1 / -1; }
+.notes { padding: 10px 12px; resize: vertical; }
+.facts { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+.fact { display: flex; flex-direction: column; }
+@media (min-width: 480px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}

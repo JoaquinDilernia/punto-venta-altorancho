@@ -1,0 +1,4 @@
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.badge { padding: 3px 8px; border-radius: 6px; background: var(--done-bg); color: var(--done); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.empty { background: var(--wash-2); color: var(--ink-3); }
+.others { font-size: 13px; color: var(--ink-3); }

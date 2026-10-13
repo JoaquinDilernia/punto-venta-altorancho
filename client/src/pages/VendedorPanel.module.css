@@ -1,0 +1,60 @@
+.page { min-height: 100vh; background: var(--wash); }
+
+/* Tira: quién atiende + carritos abiertos + Nuevo cliente. */
+.strip { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3); padding: var(--s-2) var(--s-4); background: var(--paper); border-bottom: 1px solid var(--line); }
+.strip:empty { display: none; }
+.who { font-size: var(--fs-sm); color: var(--ink-2); flex-basis: 100%; }
+.carts { display: flex; gap: var(--s-2); overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.carts::-webkit-scrollbar { display: none; }
+.cartTab { flex-shrink: 0; min-height: 44px; padding: 0 var(--s-4); border: 1.5px solid var(--line-strong); border-radius: var(--r-pill); background: var(--paper); font-weight: 500; font-variant-numeric: tabular-nums; }
+.cartTabOn { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+/* Una columna en celular; el espacio de abajo es para la barra fija. */
+.main { display: flex; flex-direction: column; gap: var(--s-6); padding: var(--s-4) var(--s-4) calc(110px + env(safe-area-inset-bottom)); max-width: 1280px; margin: 0 auto; }
+.searchCol, .cartCol { min-width: 0; }
+.cartCol { display: flex; flex-direction: column; gap: var(--s-3); }
+.cartTitle { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; }
+
+.sent { padding: var(--s-6) var(--s-4); border-radius: var(--r-md); background: var(--done-bg); color: var(--done); font-size: var(--fs-xl); font-weight: 600; text-align: center; }
+
+.lines { display: flex; flex-direction: column; gap: var(--s-2); }
+.line { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); }
+.lineMain { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lineName { font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.lineMeta { font-size: var(--fs-sm); color: var(--ink-2); }
+.linePrice { font-size: var(--fs-sm); color: var(--ink-2); }
+.linePrice s { color: var(--ink-3); }
+.linePrice strong { color: var(--ink); }
+.lineActions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); }
+.qty { display: flex; align-items: center; gap: var(--s-2); margin-right: auto; }
+.qty .btn { width: 44px; padding: 0; }
+.qty span { min-width: 28px; text-align: center; font-weight: 600; }
+
+.confirm { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); border: 1.5px solid var(--removed); border-radius: var(--r-md); background: var(--removed-bg); }
+.confirmActions { display: flex; gap: var(--s-2); }
+.confirmActions .btn { flex: 1; }
+
+/* Barra fija abajo: total y enviar. */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line-strong); }
+.barLabel { font-size: var(--fs-xs); color: var(--ink-3); }
+.barTotal { font-size: var(--fs-xl); font-weight: 600; line-height: 1.2; }
+
+/* Hoja inferior (modal). */
+.backdrop { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.45); }
+.sheet { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-4) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom)); background: var(--paper); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.sheetHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-3); }
+.sheetTitle h2 { font-size: var(--fs-lg); font-weight: 600; line-height: 1.3; }
+.sku { font-size: var(--fs-xs); color: var(--ink-3); }
+.sheetActions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+
+@media (min-width: 768px) {
+  .strip { flex-wrap: nowrap; padding: var(--s-2) var(--s-6); }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 440px); align-items: start; gap: var(--s-6); padding: var(--s-6) var(--s-6) calc(110px + env(safe-area-inset-bottom)); }
+  .cartCol { position: sticky; top: 72px; max-height: calc(100vh - 200px); overflow-y: auto; }
+  .backdrop { align-items: center; }
+  .sheet { border-radius: var(--r-lg); }
+}
+
+@media (min-width: 901px) {
+  .who { display: none; }
+}

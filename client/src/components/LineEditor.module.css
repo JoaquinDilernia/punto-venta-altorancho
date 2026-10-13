@@ -1,0 +1,10 @@
+.editor { display: flex; flex-direction: column; gap: var(--s-4); }
+.group { display: flex; flex-direction: column; gap: var(--s-2); border: 0; min-width: 0; }
+.stepper { display: grid; grid-template-columns: 56px 1fr 56px; gap: var(--s-2); }
+.stepper input { text-align: center; font-size: 18px; font-weight: 600; }
+.options { display: flex; flex-direction: column; gap: var(--s-2); }
+.option { display: flex; align-items: center; gap: var(--s-3); min-height: 48px; padding: 6px var(--s-3); border: 1.5px solid var(--line-strong); border-radius: var(--r-md); background: var(--paper); cursor: pointer; }
+.option input { width: 20px; height: 20px; accent-color: var(--ink); flex-shrink: 0; }
+.optionOn { border-color: var(--ink); background: var(--wash); }
+.optionOff { opacity: 0.45; cursor: not-allowed; }
+.avail { margin-left: auto; font-weight: 600; }
