@@ -1,0 +1,191 @@
+/* ---- Encabezado de panel ---- */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 56px;
+  padding: 0 var(--s-5);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: baseline; gap: var(--s-3); flex-shrink: 0; }
+.brandLogo { height: 26px; width: auto; align-self: center; }
+/* El nombre del panel en minúscula con punto, como el logo. */
+.panelName { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
+/* Las pestañas nunca parten el título en dos filas: si no entran, la barra se
+   desliza de costado (sin barra de scroll visible). */
+.tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 2px;
+  margin-left: var(--s-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.12s;
+}
+/* Hover discreto: solo oscurece el texto, y solo con mouse. */
+@media (hover: hover) {
+  .tab:hover { color: var(--ink); }
+}
+.tabActive, .tabActive:hover { background: var(--ink); color: var(--paper); }
+.headerEnd { margin-left: auto; display: flex; align-items: center; gap: var(--s-3); flex-shrink: 0; }
+.userName { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
+
+/* Celular / tablet angosta: logo y Salir arriba, pestañas en una fila abajo
+   que se desliza con el dedo, pegada a los bordes. */
+@media (max-width: 900px) {
+  .header { flex-wrap: wrap; padding: var(--s-2) var(--s-4) 0; gap: 0 var(--s-2); min-height: 0; }
+  .brand { min-height: 44px; align-items: center; }
+  .brandLogo { height: 22px; }
+  .panelName { font-size: var(--fs-lg); }
+  .tabs {
+    order: 3;
+    flex-basis: 100%;
+    margin: 0 calc(var(--s-4) * -1);
+    padding: var(--s-1) var(--s-4) var(--s-2);
+    scroll-padding-inline: var(--s-4);
+  }
+  .tab { min-height: 36px; }
+  .userName { display: none; }
+}
+
+/* ---- Etiquetas (chips) ----
+   Arrancan con un punto de color: el punto del logo. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.chip::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.chipLg { padding: 5px 12px 5px 10px; font-size: var(--fs-sm); }
+.tone-pending { background: var(--pending-bg); color: var(--pending); }
+.tone-sent { background: var(--sent-bg); color: var(--sent); }
+.tone-done { background: var(--done-bg); color: var(--done); }
+.tone-removed { background: var(--removed-bg); color: var(--removed); }
+.tone-transfer { background: var(--pay-transfer-bg); color: var(--pay-transfer); }
+.tone-cash { background: var(--pay-cash-bg); color: var(--pay-cash); }
+.tone-mp { background: var(--pay-mp-bg); color: var(--pay-mp); }
+.tone-neutral { background: var(--wash-2); color: var(--ink-2); }
+
+/* ---- Aviso ---- */
+.notice {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.notice-error { background: var(--removed-bg); color: var(--removed); }
+.notice-success { background: var(--done-bg); color: var(--done); }
+.notice-info { background: var(--wash); color: var(--ink-2); }
+.noticeClose { margin-left: auto; border: none; background: none; color: inherit; font-size: var(--fs-lg); line-height: 1; }
+
+/* ---- Vacío ---- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-12) var(--s-6);
+  color: var(--ink-3);
+  text-align: center;
+}
+.emptyTitle { color: var(--ink-2); font-size: var(--fs-lg); font-weight: 500; }
+
+/* ---- Ingreso ---- */
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-6) var(--s-4);
+  background: var(--wash);
+}
+.loginCard {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-10) var(--s-8);
+  background: var(--paper);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+}
+.loginLogo { width: 200px; height: auto; margin-bottom: var(--s-2); }
+.loginTitle { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.loginHint { color: var(--ink-2); font-size: var(--fs-sm); margin-top: calc(var(--s-2) * -1); }
+.pinInput { font-size: var(--fs-2xl); letter-spacing: 0.4em; text-align: center; min-height: 64px; }
+
+/* ---- Número de pedido ---- */
+.orderNumbers { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.orderNumber { font-weight: 600; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.orderNumberLg { font-size: var(--fs-md); }
+
+/* ---- Foto de producto (cuadrada, fondo blanco como las fotos de Odoo) ---- */
+.photo {
+  display: block;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.photoFill { width: 100%; height: auto; border-radius: var(--r-md); }
+.photoEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wash);
+  color: var(--ink-3);
+}
+
+/* Etiqueta de condición: sólida (a diferencia de los chips de estado y de
+   pago, que son claros con punto) para que falla/discontinuo se vea de lejos. */
+.condition {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--cond);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.conditionLg { padding: 3px 10px; font-size: var(--fs-xs); }

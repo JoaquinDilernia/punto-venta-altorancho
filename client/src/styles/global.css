@@ -1,0 +1,168 @@
+/* ============================================
+   Feria Alto Rancho — sistema visual
+   Blanco + grafito Alto Rancho (#353434), Poppins.
+   El punto final del logo es el recurso de marca: títulos en minúscula
+   con punto y un punto de color al inicio de cada etiqueta.
+   ============================================ */
+
+:root {
+  /* Base */
+  --paper: #ffffff;
+  --ink: #353434;
+  --ink-2: #5f5d5c;
+  --ink-3: #8e8b8a;
+  --line: #e7e5e4;
+  --line-strong: #d3d0ce;
+  --wash: #f6f6f5;
+  --wash-2: #eeedec;
+
+  /* Estados de línea / pedido */
+  --pending: #9a5b00;
+  --pending-bg: #fff2d9;
+  --sent: #3446c4;
+  --sent-bg: #eaedfd;
+  --done: #16794a;
+  --done-bg: #e1f4e9;
+  --removed: #b42318;
+  --removed-bg: #fdecea;
+
+  /* Condición del producto (colores de marca): falla rojo, discontinuo
+     gris azulado. El fondo y el borde son tintes claros del mismo tono. */
+  --falla: #a01c19;
+  --falla-bg: #f9ebea;
+  --falla-line: #e3b3b1;
+  --disc: #35454e;
+  --disc-bg: #edf0f2;
+  --disc-line: #bfc8cd;
+
+  /* Medios de pago */
+  --pay-transfer: #6a3fd1;
+  --pay-transfer-bg: #f1ecfe;
+  --pay-cash: #0d7a6f;
+  --pay-cash-bg: #dff4f0;
+  --pay-mp: #0077c0;
+  --pay-mp-bg: #e1f0fa;
+
+  /* Forma */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* Tipo */
+  --font: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 22px;
+  --fs-2xl: 30px;
+  --fs-3xl: 40px;
+
+  /* Espacio */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  --focus: 0 0 0 3px rgba(53, 52, 52, 0.25);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { cursor: pointer; font: inherit; color: inherit; }
+button:disabled { cursor: not-allowed; }
+input, select, textarea { font: inherit; color: inherit; }
+img { display: block; }
+ul, ol { list-style: none; }
+:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- Botones ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-5);
+  border-radius: var(--r-md);
+  border: 1.5px solid transparent;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+.btn:disabled { opacity: 0.4; }
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-primary:not(:disabled):hover { background: #242323; }
+.btn-secondary { background: var(--paper); border-color: var(--line-strong); }
+.btn-secondary:not(:disabled):hover { border-color: var(--ink); }
+.btn-danger { background: var(--paper); border-color: var(--removed); color: var(--removed); }
+.btn-danger:not(:disabled):hover { background: var(--removed-bg); }
+.btn-success { background: var(--done); color: var(--paper); }
+.btn-success:not(:disabled):hover { background: #11653d; }
+.btn-ghost { background: transparent; color: var(--ink-2); }
+.btn-ghost:not(:disabled):hover { color: var(--ink); background: var(--wash); }
+.btn-lg { min-height: 56px; font-size: var(--fs-lg); font-weight: 600; border-radius: var(--r-md); }
+.btn-sm { min-height: 36px; padding: 0 var(--s-3); font-size: var(--fs-sm); border-radius: var(--r-sm); }
+.btn-block { width: 100%; }
+
+/* ---- Campos ---- */
+.field { display: flex; flex-direction: column; gap: var(--s-1); }
+.field-label { font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
+.input, .select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  font-size: var(--fs-md);
+  transition: border-color 120ms ease;
+}
+.input::placeholder { color: var(--ink-3); }
+.input:focus, .select:focus { border-color: var(--ink); box-shadow: none; outline: none; }
+.select { padding-right: var(--s-8); appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23353434' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; }
+.select-sm { min-height: 36px; font-size: var(--fs-sm); border-radius: var(--r-sm); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* Condición del producto: cualquier bloque con .cond-falla / .cond-discontinuo
+   expone --cond, --cond-bg y --cond-line para teñir bordes, fondos y textos. */
+.cond-falla { --cond: var(--falla); --cond-bg: var(--falla-bg); --cond-line: var(--falla-line); }
+.cond-discontinuo { --cond: var(--disc); --cond-bg: var(--disc-bg); --cond-line: var(--disc-line); }
+.cond-varios { --cond: var(--ink-2); --cond-bg: var(--wash-2); --cond-line: var(--line-strong); }
+
+/* ---- Pantallas táctiles (celular) ----
+   iOS hace zoom al enfocar un campo de menos de 16px: en táctil van a 16px.
+   Los botones chicos crecen a 44px de alto (el mínimo cómodo para el dedo). */
+@media (pointer: coarse) {
+  .input, .select, textarea.input { font-size: 16px; }
+  .btn-sm { min-height: 44px; }
+  .select-sm { min-height: 44px; font-size: 16px; }
+}
