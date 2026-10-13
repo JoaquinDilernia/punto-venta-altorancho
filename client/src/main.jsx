@@ -8,7 +8,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {/* HashRouter a propósito: el navegador nunca manda el hash al server,
         así que cualquier host estático sirve /index.html y el ruteo funciona
-        sin configurar ningún rewrite. Las URLs quedan como /#/feria. */}
+        sin configurar ningún rewrite. Las URLs quedan como /#/caja. */}
     <HashRouter>
       <App />
     </HashRouter>

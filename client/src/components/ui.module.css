@@ -148,11 +148,6 @@
 .loginHint { color: var(--ink-2); font-size: var(--fs-sm); margin-top: calc(var(--s-2) * -1); }
 .pinInput { font-size: var(--fs-2xl); letter-spacing: 0.4em; text-align: center; min-height: 64px; }
 
-/* ---- Número de pedido ---- */
-.orderNumbers { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
-.orderNumber { font-weight: 600; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.orderNumberLg { font-size: var(--fs-md); }
-
 /* ---- Foto de producto (cuadrada, fondo blanco como las fotos de Odoo) ---- */
 .photo {
   display: block;
@@ -171,21 +166,3 @@
   background: var(--wash);
   color: var(--ink-3);
 }
-
-/* Etiqueta de condición: sólida (a diferencia de los chips de estado y de
-   pago, que son claros con punto) para que falla/discontinuo se vea de lejos. */
-.condition {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--cond);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-.conditionLg { padding: 3px 10px; font-size: var(--fs-xs); }

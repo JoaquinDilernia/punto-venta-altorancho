@@ -1,14 +1,13 @@
-// Una sesión por panel: vendedor por un lado, caja/logística por otro. Con
-// una sola sesión compartida, entrar a Caja en otra pestaña del mismo
-// navegador pisaba el token del vendedor y sus pedidos daban "Acceso
-// restringido".
-
-// Qué sesión usa la pantalla actual (las rutas van con hash: /#/vendedor).
+// Una sesión por panel (vendedor, caja, admin): entrar a Caja en otra
+// pestaña no pisa la sesión del vendedor. Las rutas van con hash: /#/caja.
 export function roleForRoute() {
-  return window.location.hash.startsWith('#/vendedor') ? 'vendedor' : 'caja';
+  const hash = window.location.hash;
+  if (hash.startsWith('#/vendedor')) return 'vendedor';
+  if (hash.startsWith('#/admin')) return 'admin';
+  return 'caja';
 }
 
-const key = (role) => `feria_session_${role}`;
+const key = (role) => `pos_session_${role}`;
 
 export function getSession(role = roleForRoute()) {
   try {
@@ -18,8 +17,8 @@ export function getSession(role = roleForRoute()) {
   }
 }
 
-export function saveSession(role, token, profile) {
-  localStorage.setItem(key(role), JSON.stringify({ token, profile }));
+export function saveSession(role, token, user) {
+  localStorage.setItem(key(role), JSON.stringify({ token, user }));
 }
 
 export function clearSession(role = roleForRoute()) {

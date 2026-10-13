@@ -1,6 +1,6 @@
-import { saveSession } from '../lib/session.js';
 import { useState } from 'react';
-import { apiFetch } from '../lib/api.js';
+import { api } from '../lib/api.js';
+import { saveSession } from '../lib/session.js';
 import { LoginShell, Notice, uiStyles } from '../components/ui.jsx';
 
 export default function VendedorLogin() {
@@ -13,10 +13,8 @@ export default function VendedorLogin() {
     setError('');
     setLoading(true);
     try {
-      const { token, seller } = await apiFetch('/api/feria/auth/vendedor', {
-        method: 'POST', body: JSON.stringify({ pin }),
-      });
-      saveSession('vendedor', token, seller);
+      const { token, user } = await api('/auth/pin', { method: 'POST', body: { pin } });
+      saveSession('vendedor', token, user);
       window.location.reload();
     } catch (err) {
       setError(err.message);
@@ -26,7 +24,7 @@ export default function VendedorLogin() {
   }
 
   return (
-    <LoginShell title="vendedor." hint="Ingresá tu PIN para cargar pedidos." onSubmit={handleSubmit}>
+    <LoginShell title="vendedor." hint="Ingresá tu PIN." onSubmit={handleSubmit}>
       <label className="sr-only" htmlFor="pin">PIN</label>
       <input
         id="pin"

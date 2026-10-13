@@ -1,29 +1,23 @@
 import { getSession, clearSession, roleForRoute } from './session.js';
 
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = `${BASE_URL}/api/pos`;
 
-export async function apiFetch(path, options = {}) {
-  // Cada pantalla manda el token de su propio panel (ver session.js). El
-  // panel se fija al empezar: si se cambia de pestaña mientras tanto, un 401
-  // no puede borrar la sesión del otro panel.
+export async function api(path, { method = 'GET', body } = {}) {
   const role = roleForRoute();
   const token = getSession(role)?.token;
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-
-  // Sesión vencida (el token dura 12h y la feria dura varios días): limpiamos
-  // la sesión muerta y volvemos al login en vez de dejar el panel inservible.
-  // Ojo: las rutas de login también devuelven 401 cuando el PIN o la
-  // contraseña están mal — ahí NO hay que recargar, porque se perdería el
-  // mensaje de error en pantalla. Por eso exigimos que hubiera un token.
-  if (res.status === 401 && token && !path.startsWith('/api/feria/auth/')) {
+  // Sesión vencida (12 h): volver al login. Los logins devuelven 401 con
+  // PIN/contraseña mal: ahí no se recarga, para que se vea el error.
+  if (res.status === 401 && token && !path.startsWith('/auth/')) {
     clearSession(role);
     window.location.reload();
   }
-
   if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
   return data;
 }
+
+export const productImageUrl = (templateId) => `${API}/products/${templateId}/image`;
