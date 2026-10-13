@@ -12,8 +12,8 @@ const SHIPPING_REQUIRED = { street: 'la calle', number: 'el número', city: 'la 
 // Formato argentino: punto de miles, coma decimal ("1.500,50"). Todo lo demás se rechaza.
 export function shippingAmount(raw) {
   const text = String(raw ?? '').trim();
-  if (!/^(d+|d{1,3}(.d{3})+)(,d+)?$/.test(text)) return { ok: false, value: NaN };
-  const n = Number(text.replace(/./g, '').replace(',', '.'));
+  if (!/^(\d+|\d{1,3}(\.\d{3})+)(,\d+)?$/.test(text)) return { ok: false, value: NaN };
+  const n = Number(text.replace(/\./g, '').replace(',', '.'));
   return { ok: Number.isFinite(n) && n >= 0, value: n };
 }
 
