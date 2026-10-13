@@ -59,7 +59,7 @@ desde el panel, sin poder "olvidarse" de un paso (ej. "Enviar más tarde").
 | Local | Depósito | Ubicaciones vendibles | Equipo de ventas | Facturación |
 |---|---|---|---|---|
 | Las Lomas | LL (wh 1) | `LL/Stock` (8), `LL/Exhibicion` (324) | Punto de venta San Isidro (6) | Pto. 4 Facturas Las Lomas (journal 32) |
-| Belgrano | BL (wh 40) | `BL/Stock` (372), `BL/Exhibicion` (379) | Punto de venta Belgrano (18) | **En pausa** — sin diario propio, a confirmar por facturación |
+| Belgrano | BL (wh 40) | `BL/Stock` (372), `BL/Exhibicion` (379) | Punto de venta Belgrano (18) | Pto. Vta. 11 (journal 65, hoy llamado "Pto. 4 Facturas Las Lomas (copia)" en Odoo) — confirmado por el dueño 2026-10-13 |
 | Alcorta | AL (wh 41) | `AL/Stock` (397), `AL/Exhibición` (415) | Punto de venta Alcorta (25) | Pto. 12 Alcorta (journal 78) |
 
 Depósitos compartidos:
@@ -212,7 +212,7 @@ Promociones y cupones (configurados en Admin):
 - Emitida por Odoo (CAE vía su integración con ARCA) en el diario del local.
   Se factura el **pedido completo** al confirmar, aunque haya líneas que se
   entregan después (spike S2).
-- Local sin diario configurado (Belgrano hoy) → no ofrece factura.
+- Local sin diario configurado → no ofrece factura.
 - **Ninguna factura real hasta autorización explícita del dueño** (igual que
   en la feria: toggle por entorno).
 
@@ -295,7 +295,7 @@ Odoo − reservas de la app.
 
 ## 11. Pendientes con terceros
 
-- Facturación: punto de venta de Belgrano; qué es "detalle de pago"; cómo
+- Facturación: qué es "detalle de pago"; cómo
   registrar cobros en diarios de caja de Odoo.
 - Stock: qué es "Alcorta en Rolón"; stock "infinito" en `EC/Stock`.
 - Directivos: venta desde otros locales / web (por ahora no).

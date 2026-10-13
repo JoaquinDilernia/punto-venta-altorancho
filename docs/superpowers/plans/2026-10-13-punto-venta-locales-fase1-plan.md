@@ -553,7 +553,7 @@ test('valores iniciales: tres locales con sus ubicaciones de Odoo', () => {
   assert.deepEqual(DEFAULT_LOCALES.map((l) => l.id), ['LL', 'BL', 'AL']);
   assert.equal(lomas.stockLocationId, 8);
   assert.equal(lomas.exhibicionLocationId, 324);
-  assert.equal(DEFAULT_LOCALES.find((l) => l.id === 'BL').invoiceJournalId, null);
+  assert.equal(DEFAULT_LOCALES.find((l) => l.id === 'BL').invoiceJournalId, 65);
   assert.equal(DEFAULT_SETTINGS.rolon.locationId, 174);
 });
 
@@ -607,7 +607,7 @@ const CACHE_MS = 30 * 1000;
 
 export const DEFAULT_LOCALES = [
   { id: 'LL', name: 'Las Lomas', warehouseId: 1, stockLocationId: 8, exhibicionLocationId: 324, teamId: 6, invoiceJournalId: 32, address: '', active: true },
-  { id: 'BL', name: 'Belgrano', warehouseId: 40, stockLocationId: 372, exhibicionLocationId: 379, teamId: 18, invoiceJournalId: null, address: '', active: true },
+  { id: 'BL', name: 'Belgrano', warehouseId: 40, stockLocationId: 372, exhibicionLocationId: 379, teamId: 18, invoiceJournalId: 65, address: '', active: true },
   { id: 'AL', name: 'Alcorta', warehouseId: 41, stockLocationId: 397, exhibicionLocationId: 415, teamId: 25, invoiceJournalId: 78, address: '', active: true },
 ];
 
