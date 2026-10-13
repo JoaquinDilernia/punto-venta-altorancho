@@ -1,7 +1,7 @@
 import styles from './CustomerForm.module.css';
 
 const FIELDS = [
-  ['street', 'Calle', true], ['number', 'Número'], ['floor', 'Piso / depto'],
+  ['street', 'Calle', true], ['number', 'Número', false, 'numeric'], ['floor', 'Piso / depto'],
   ['city', 'Localidad'], ['zip', 'Código postal'], ['phone', 'Teléfono'],
 ];
 
@@ -9,10 +9,12 @@ export const EMPTY_SHIPPING = { street: '', number: '', floor: '', city: '', zip
 
 const SHIPPING_REQUIRED = { street: 'la calle', number: 'el número', city: 'la localidad', zip: 'el código postal', phone: 'el teléfono' };
 
+// Formato argentino: punto de miles, coma decimal ("1.500,50"). Todo lo demás se rechaza.
 export function shippingAmount(raw) {
-  const text = String(raw ?? '').trim().replace(',', '.');
-  const n = Number(text);
-  return { ok: text !== '' && Number.isFinite(n) && n >= 0, value: n };
+  const text = String(raw ?? '').trim();
+  if (!/^(d+|d{1,3}(.d{3})+)(,d+)?$/.test(text)) return { ok: false, value: NaN };
+  const n = Number(text.replace(/./g, '').replace(',', '.'));
+  return { ok: Number.isFinite(n) && n >= 0, value: n };
 }
 
 // Mismos mensajes que el backend (validateShipping).
@@ -26,15 +28,15 @@ export function shippingErrors(s) {
 
 // Datos del envío a domicilio (si alguna línea es "Envío a domicilio").
 export default function ShippingFields({ value, onChange }) {
-  const set = (key) => (e) => onChange({ ...value, [key]: e.target.value });
+  const set = (key) => (e) => onChange({ [key]: e.target.value });
   return (
     <fieldset className={styles.form}>
       <legend className={styles.title}>Envío a domicilio</legend>
       <div className={styles.grid}>
-        {FIELDS.map(([key, label, wide]) => (
+        {FIELDS.map(([key, label, wide, mode]) => (
           <label key={key} className={`field ${wide ? styles.wide : ''}`}>
             <span className="field-label">{label}</span>
-            <input className="input" value={value[key]} onChange={set(key)} autoComplete="off" />
+            <input className="input" inputMode={mode} value={value[key]} onChange={set(key)} autoComplete="off" />
           </label>
         ))}
         <label className={`field ${styles.wide}`}>

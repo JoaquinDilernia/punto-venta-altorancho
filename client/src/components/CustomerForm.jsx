@@ -31,11 +31,11 @@ export default function CustomerForm({ value, onChange, decoradorTagId }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState({ kind: 'info', text: '' });
 
-  const set = (key) => (e) => onChange({ ...value, [key]: e.target.value });
+  const set = (key) => (e) => onChange({ [key]: e.target.value });
 
   // Cambiar el documento invalida lo que vino de la búsqueda anterior.
   function setDoc(e) {
-    onChange({ ...value, docNumber: e.target.value, odooPartnerId: null, tagIds: [], fromArca: false, afipResponsibility: null });
+    onChange({ docNumber: e.target.value, odooPartnerId: null, tagIds: [], fromArca: false, afipResponsibility: null });
     setNotice({ kind: 'info', text: '' });
   }
 
@@ -49,29 +49,33 @@ export default function CustomerForm({ value, onChange, decoradorTagId }) {
     setNotice({ kind: 'info', text: '' });
     try {
       const { odoo, arca, arcaError } = await api(`/customers/lookup?doc=${encodeURIComponent(digits)}`);
-      let next = { ...value };
-      if (arca) {
-        next = {
-          ...next, name: arca.name, street: arca.street, city: arca.city, zip: arca.zip,
-          afipResponsibility: arca.afipResponsibility, fromArca: true,
-        };
-      }
-      if (odoo) {
-        next = {
-          ...next,
-          email: next.email || odoo.email || '',
-          phone: next.phone || odoo.phone || '',
-          odooPartnerId: odoo.id,
-          tagIds: odoo.tagIds ?? [],
-        };
-        if (!arca) {
-          next = {
-            ...next, name: odoo.name, street: odoo.street ?? '', city: odoo.city ?? '', zip: odoo.zip ?? '',
-            afipResponsibility: odoo.afipResponsibility ?? null,
+      // Solo los campos que trajo la búsqueda, sobre el valor más reciente:
+      // lo que se escribió mientras esperaba no se pisa.
+      onChange((latest) => {
+        let fields = {};
+        if (arca) {
+          fields = {
+            name: arca.name, street: arca.street, city: arca.city, zip: arca.zip,
+            afipResponsibility: arca.afipResponsibility, fromArca: true,
           };
         }
-      }
-      onChange(next);
+        if (odoo) {
+          fields = {
+            ...fields,
+            email: latest.email || odoo.email || '',
+            phone: latest.phone || odoo.phone || '',
+            odooPartnerId: odoo.id,
+            tagIds: odoo.tagIds ?? [],
+          };
+          if (!arca) {
+            fields = {
+              ...fields, name: odoo.name, street: odoo.street ?? '', city: odoo.city ?? '', zip: odoo.zip ?? '',
+              afipResponsibility: odoo.afipResponsibility ?? null,
+            };
+          }
+        }
+        return fields;
+      });
       if (arcaError) setNotice({ kind: 'info', text: `ARCA no respondió (${arcaError}). Podés seguir cargando los datos a mano.` });
       else if (!odoo && !arca) setNotice({ kind: 'info', text: 'No encontramos al cliente: cargá los datos a mano.' });
     } catch (err) {

@@ -5,7 +5,7 @@ import { DELIVERY_LABELS, ORIGIN_LABELS, formatMoney } from '../lib/labels.js';
 import { AppHeader, EmptyState, Notice } from '../components/ui.jsx';
 import ProductSearch from '../components/ProductSearch.jsx';
 import StockBadges from '../components/StockBadges.jsx';
-import LineEditor, { defaultLineValue } from '../components/LineEditor.jsx';
+import LineEditor, { availableFor, defaultLineValue } from '../components/LineEditor.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../components/CustomerForm.jsx';
 import ShippingFields, { EMPTY_SHIPPING, shippingAmount, shippingErrors } from '../components/ShippingFields.jsx';
 import styles from './VendedorPanel.module.css';
@@ -28,6 +28,7 @@ function LineSheet({ product, line, locales, ownLocalId, onConfirm, onClose }) {
   }, [onClose]);
 
   const missingLocal = value.delivery === 'retira_otro_local' && !value.pickupLocalId;
+  const noStock = Boolean(product) && availableFor(product.stock, value.origin) === 0;
 
   async function confirm() {
     setSaving(true);
@@ -52,10 +53,10 @@ function LineSheet({ product, line, locales, ownLocalId, onConfirm, onClose }) {
         </div>
         {product && <StockBadges stock={product.stock} />}
         <LineEditor stock={product?.stock ?? null} locales={locales} ownLocalId={ownLocalId} value={value} onChange={setValue} />
-        <Notice kind="error">{error}</Notice>
+        <Notice kind="error">{noStock ? 'Sin stock disponible en ninguna ubicación' : error}</Notice>
         <div className={styles.sheetActions}>
           <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>Cancelar</button>
-          <button type="button" className="btn btn-primary btn-lg" onClick={confirm} disabled={saving || missingLocal}>
+          <button type="button" className="btn btn-primary btn-lg" onClick={confirm} disabled={saving || missingLocal || noStock}>
             {saving ? 'Guardando…' : product ? 'Agregar' : 'Guardar'}
           </button>
         </div>
@@ -64,7 +65,7 @@ function LineSheet({ product, line, locales, ownLocalId, onConfirm, onClose }) {
   );
 }
 
-function CartLine({ line, localName, busy, onQty, onEdit, onRemove }) {
+function CartLine({ line, localName, busy, onlyLine, onQty, onEdit, onRemove }) {
   const promo = line.promoPrice != null && line.promoPrice < line.fullPrice;
   return (
     <li className={styles.line}>
@@ -87,7 +88,8 @@ function CartLine({ line, localName, busy, onQty, onEdit, onRemove }) {
           <button type="button" className="btn btn-secondary" aria-label="Más" disabled={busy} onClick={() => onQty(line, line.qty + 1)}>+</button>
         </div>
         <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => onEdit(line)}>Editar</button>
-        <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => onRemove(line)}>Quitar</button>
+        <button type="button" className="btn btn-danger btn-sm" disabled={busy || onlyLine} title={onlyLine ? 'Es la única línea: usá Vaciar carrito' : undefined} onClick={() => onRemove(line)}>Quitar</button>
+        {onlyLine && <span className={styles.lineHint}>Única línea: usá Vaciar carrito</span>}
       </div>
     </li>
   );
@@ -103,6 +105,7 @@ export default function VendedorPanel() {
   const [sent, setSent] = useState('');
   const [sheet, setSheet] = useState(null); // { product } | { line }
   const [busy, setBusy] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -132,7 +135,13 @@ export default function VendedorPanel() {
   const total = lines.reduce((sum, l) => sum + l.basePrice * l.qty, 0);
   const hasEnvio = lines.some((l) => l.delivery === 'envio');
   const draft = (cart && drafts[cart.id]) || { customer: EMPTY_CUSTOMER, shipping: EMPTY_SHIPPING };
-  const setDraft = (changes) => setDrafts((prev) => ({ ...prev, [cart.id]: { ...draft, ...changes } }));
+  // Actualización funcional: lo que se escribe mientras una búsqueda está en vuelo no se pierde.
+  // `change` es un objeto de campos o una función (último valor) -> campos.
+  const draftUpdater = (id, key) => (change) => setDrafts((prev) => {
+    const cur = prev[id] ?? { customer: EMPTY_CUSTOMER, shipping: EMPTY_SHIPPING };
+    const fields = typeof change === 'function' ? change(cur[key]) : change;
+    return { ...prev, [id]: { ...cur, [key]: { ...cur[key], ...fields } } };
+  });
 
   // La respuesta del servidor trae el pedido completo: reemplaza al local.
   const putCart = (order) => setCarts((prev) => (prev.some((c) => c.id === order.id)
@@ -200,6 +209,7 @@ export default function VendedorPanel() {
       setNotice({ kind: 'error', text: errors.join('. ') });
       return;
     }
+    setSubmitting(true);
     cartOp(async () => {
       const body = { customer: draft.customer };
       if (hasEnvio) body.shipping = { ...draft.shipping, amount: shippingAmount(draft.shipping.amount).value };
@@ -207,7 +217,7 @@ export default function VendedorPanel() {
       setCarts((prev) => prev.filter((c) => c.id !== cart.id));
       setActiveCartId(null);
       setSent(`${order.number ?? cart.number} enviado a caja`);
-    });
+    }).finally(() => setSubmitting(false));
   }
 
   function selectCart(id) {
@@ -258,14 +268,15 @@ export default function VendedorPanel() {
             <>
               <ul className={styles.lines}>
                 {lines.map((l) => (
-                  <CartLine key={l.lineId} line={l} localName={localName} busy={busy} onQty={changeQty} onEdit={(line) => setSheet({ line })} onRemove={removeLine} />
+                  <CartLine key={l.lineId} line={l} localName={localName} busy={busy} onlyLine={lines.length <= 1} onQty={changeQty} onEdit={(line) => setSheet({ line })} onRemove={removeLine} />
                 ))}
               </ul>
 
-              {hasEnvio && <ShippingFields value={draft.shipping} onChange={(shipping) => setDraft({ shipping })} />}
+              {hasEnvio && <ShippingFields value={draft.shipping} onChange={draftUpdater(cart.id, 'shipping')} />}
               <CustomerForm
+                key={cart.id}
                 value={draft.customer}
-                onChange={(customer) => setDraft({ customer })}
+                onChange={draftUpdater(cart.id, 'customer')}
                 decoradorTagId={config?.settings?.decoradorTagId}
               />
 
@@ -291,7 +302,7 @@ export default function VendedorPanel() {
           <p className={`${styles.barTotal} num`}>{formatMoney(total)}</p>
         </div>
         <button type="button" className="btn btn-primary btn-lg" disabled={busy || !cart || lines.length === 0} onClick={submit}>
-          {busy ? 'Enviando…' : 'Enviar a caja'}
+          {submitting ? 'Enviando…' : 'Enviar a caja'}
         </button>
       </footer>
 

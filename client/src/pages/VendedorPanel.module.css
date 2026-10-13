@@ -25,6 +25,7 @@
 .linePrice { font-size: var(--fs-sm); color: var(--ink-2); }
 .linePrice s { color: var(--ink-3); }
 .linePrice strong { color: var(--ink); }
+.lineHint { flex-basis: 100%; font-size: var(--fs-xs); color: var(--ink-3); }
 .lineActions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); }
 .qty { display: flex; align-items: center; gap: var(--s-2); margin-right: auto; }
 .qty .btn { width: 44px; padding: 0; }
