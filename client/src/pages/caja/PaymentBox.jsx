@@ -270,6 +270,7 @@ export default function PaymentBox({
             <div className={styles.bold}><dt>Subtotal</dt><dd className="num">{formatMoney(totals.subtotal)}</dd></div>
             {extra && <div><dt>Descuento extra ({extra.name})</dt><dd className="num">− {formatMoney(totals.extraDiscount)}</dd></div>}
             {totals.shipping > 0 && <div><dt>Envío</dt><dd className="num">+ {formatMoney(totals.shipping)}</dd></div>}
+            {totals.homeService > 0 && <div><dt>Subida al domicilio</dt><dd className="num">+ {formatMoney(totals.homeService)}</dd></div>}
           </dl>
         )}
       </div>

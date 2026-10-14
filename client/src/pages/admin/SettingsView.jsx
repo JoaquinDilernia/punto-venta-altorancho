@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { Notice } from '../../components/ui.jsx';
 import { OdooSelect, useApiData } from './adminParts.jsx';
+import { parseMoney } from '../caja/money.js';
 import styles from './admin.module.css';
 
 const pickingName = (o) => (Array.isArray(o.warehouse_id) ? `${o.warehouse_id[1]} · ${o.name}` : o.name);
@@ -17,6 +18,8 @@ function toForm(s) {
     orderPricelistId: s.orderPricelistId ?? null,
     shippingProductSku: s.shippingProductSku ?? '',
     decoradorTagId: s.decoradorTagId ?? null,
+    homeServiceSku: s.homeServiceSku ?? 'SERVIDOM',
+    homeServiceDefaultAmount: String(s.homeServiceDefaultAmount ?? 5000).replace('.', ','),
   };
 }
 
@@ -37,6 +40,12 @@ export default function SettingsView() {
     setSaving(true);
     setError('');
     setSaved('');
+    const homeAmount = parseMoney(form.homeServiceDefaultAmount);
+    if (!homeAmount.ok) {
+      setSaving(false);
+      setError('El monto de la subida al domicilio es inválido');
+      return;
+    }
     try {
       // Se manda el documento entero: el backend lo reemplaza.
       const result = await api('/admin/settings', {
@@ -49,6 +58,8 @@ export default function SettingsView() {
           orderPricelistId: form.orderPricelistId,
           shippingProductSku: form.shippingProductSku.trim(),
           decoradorTagId: form.decoradorTagId,
+          homeServiceSku: form.homeServiceSku.trim(),
+          homeServiceDefaultAmount: homeAmount.value,
         },
       });
       setForm(toForm(result));
@@ -92,6 +103,14 @@ export default function SettingsView() {
             <label className="field">
               <span className="field-label">SKU del producto de envío *</span>
               <input className="input" value={form.shippingProductSku} onChange={(e) => set('shippingProductSku')(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">SKU de la subida al domicilio *</span>
+              <input className="input" value={form.homeServiceSku} onChange={(e) => set('homeServiceSku')(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">Monto sugerido de subida al domicilio ($, con IVA) *</span>
+              <input className="input num" inputMode="decimal" value={form.homeServiceDefaultAmount} onChange={(e) => set('homeServiceDefaultAmount')(e.target.value)} />
             </label>
             <OdooSelect label="Etiqueta de decorador" options={opts.tags} value={form.decoradorTagId} onChange={set('decoradorTagId')} empty="Sin etiqueta" />
           </div>

@@ -7,7 +7,7 @@ import ProductSearch from '../components/ProductSearch.jsx';
 import StockBadges from '../components/StockBadges.jsx';
 import LineEditor, { availableFor, defaultLineValue } from '../components/LineEditor.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../components/CustomerForm.jsx';
-import ShippingFields, { EMPTY_SHIPPING, shippingAmount, shippingErrors } from '../components/ShippingFields.jsx';
+import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../components/ShippingFields.jsx';
 import styles from './VendedorPanel.module.css';
 
 const activeLinesOf = (cart) => (cart?.lines ?? []).filter((l) => l.status !== 'eliminado');
@@ -212,7 +212,7 @@ export default function VendedorPanel() {
     setSubmitting(true);
     cartOp(async () => {
       const body = { customer: draft.customer };
-      if (hasEnvio) body.shipping = { ...draft.shipping, amount: shippingAmount(draft.shipping.amount).value };
+      if (hasEnvio) body.shipping = shippingBody(draft.shipping);
       const order = await api(`/carts/${cart.id}/submit`, { method: 'POST', body });
       setCarts((prev) => prev.filter((c) => c.id !== cart.id));
       setActiveCartId(null);
@@ -272,7 +272,7 @@ export default function VendedorPanel() {
                 ))}
               </ul>
 
-              {hasEnvio && <ShippingFields value={draft.shipping} onChange={draftUpdater(cart.id, 'shipping')} />}
+              {hasEnvio && <ShippingFields value={draft.shipping} onChange={draftUpdater(cart.id, 'shipping')} defaultHomeAmount={config?.settings?.homeServiceDefaultAmount} />}
               <CustomerForm
                 key={cart.id}
                 value={draft.customer}

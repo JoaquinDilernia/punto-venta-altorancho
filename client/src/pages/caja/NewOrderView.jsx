@@ -4,9 +4,8 @@ import { formatMoney } from '../../lib/labels.js';
 import { EmptyState, Notice } from '../../components/ui.jsx';
 import ProductSearch from '../../components/ProductSearch.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../../components/CustomerForm.jsx';
-import ShippingFields, { EMPTY_SHIPPING, shippingErrors } from '../../components/ShippingFields.jsx';
+import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../../components/ShippingFields.jsx';
 import { LineDialog, LineRow, activeLinesOf, lineBody } from './lineParts.jsx';
-import { parseMoney } from './money.js';
 import styles from './caja.module.css';
 
 // Pedido nuevo armado en el mostrador: mismo flujo que el vendedor (carrito ->
@@ -93,7 +92,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
     if (hasEnvio) errors.push(...shippingErrors(shipping));
     if (errors.length) { setNotice(errors.join('. ')); return; }
     const body = { customer };
-    if (hasEnvio) body.shipping = { ...shipping, amount: parseMoney(shipping.amount).value };
+    if (hasEnvio) body.shipping = shippingBody(shipping);
     const order = await op(() => api(`/carts/${cart.id}/submit`, { method: 'POST', body }));
     if (!order) return;
     resetForm();
@@ -121,7 +120,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
                 ))}
               </ul>
               <p className={`${styles.cartTotal} num`}>Total productos <strong>{formatMoney(total)}</strong></p>
-              {hasEnvio && <ShippingFields value={shipping} onChange={updater(setShipping)} />}
+              {hasEnvio && <ShippingFields value={shipping} onChange={updater(setShipping)} defaultHomeAmount={config.settings?.homeServiceDefaultAmount} />}
               <CustomerForm key={cart.id} value={customer} onChange={updater(setCustomer)} decoradorTagId={config.settings?.decoradorTagId} />
               <div className={styles.rowActions}>
                 <button type="button" className="btn btn-primary btn-lg" disabled={busy || lines.length === 0} onClick={submit}>{busy ? 'Enviando…' : 'Enviar a caja y cobrar'}</button>

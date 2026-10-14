@@ -5,7 +5,7 @@ const FIELDS = [
   ['city', 'Localidad'], ['zip', 'Código postal'], ['phone', 'Teléfono'],
 ];
 
-export const EMPTY_SHIPPING = { street: '', number: '', floor: '', city: '', zip: '', phone: '', notes: '', amount: '' };
+export const EMPTY_SHIPPING = { street: '', number: '', floor: '', city: '', zip: '', phone: '', notes: '', amount: '', homeService: false, homeAmount: '' };
 
 const SHIPPING_REQUIRED = { street: 'la calle', number: 'el número', city: 'la localidad', zip: 'el código postal', phone: 'el teléfono' };
 
@@ -23,12 +23,26 @@ export function shippingErrors(s) {
     .filter(([key]) => !String(s[key] ?? '').trim())
     .map(([, label]) => `Falta ${label} del envío`);
   if (!shippingAmount(s.amount).ok) errors.push('Costo de envío inválido');
+  if (s.homeService && !shippingAmount(s.homeAmount).ok) errors.push('Monto de subida al domicilio inválido');
   return errors;
 }
 
+// Lo que se manda al servidor: el borrador sin los campos de pantalla, con los
+// montos ya como número (subida al domicilio: número o null si no se pidió).
+export function shippingBody(s) {
+  const { homeService, homeAmount, ...rest } = s;
+  return { ...rest, amount: shippingAmount(s.amount).value, homeServiceAmount: homeService ? shippingAmount(homeAmount).value : null };
+}
+
 // Datos del envío a domicilio (si alguna línea es "Envío a domicilio").
-export default function ShippingFields({ value, onChange }) {
+export default function ShippingFields({ value, onChange, defaultHomeAmount }) {
   const set = (key) => (e) => onChange({ [key]: e.target.value });
+  const toggleHome = (e) => {
+    const on = e.target.checked;
+    onChange(on && !String(value.homeAmount ?? '').trim() && defaultHomeAmount != null
+      ? { homeService: true, homeAmount: String(defaultHomeAmount).replace('.', ',') }
+      : { homeService: on });
+  };
   return (
     <fieldset className={styles.form}>
       <legend className={styles.title}>Envío a domicilio</legend>
@@ -42,6 +56,14 @@ export default function ShippingFields({ value, onChange }) {
         <label className={`field ${styles.wide}`}>
           <span className="field-label">Costo del envío ($, a mano)</span>
           <input className="input num" inputMode="decimal" placeholder="0" value={value.amount} onChange={set('amount')} />
+        </label>
+        <label className={`field ${styles.wide}`}>
+          <span className="field-label">
+            <input type="checkbox" checked={Boolean(value.homeService)} onChange={toggleHome} /> Subida al domicilio (escaleras, etc.)
+          </span>
+          {value.homeService && (
+            <input className="input num" inputMode="decimal" placeholder="Monto con IVA ($)" value={value.homeAmount ?? ''} onChange={set('homeAmount')} />
+          )}
         </label>
         <label className={`field ${styles.wide}`}>
           <span className="field-label">Notas</span>

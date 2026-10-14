@@ -5,7 +5,7 @@ import { formatDateTime } from '../../lib/format.js';
 import { Notice, OrderStatusChip } from '../../components/ui.jsx';
 import ProductSearch from '../../components/ProductSearch.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../../components/CustomerForm.jsx';
-import ShippingFields, { EMPTY_SHIPPING, shippingErrors } from '../../components/ShippingFields.jsx';
+import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../../components/ShippingFields.jsx';
 import PaymentBox from './PaymentBox.jsx';
 import { LineDialog, LineRow, activeLinesOf, lineBody } from './lineParts.jsx';
 import { moneyText, parseMoney } from './money.js';
@@ -27,11 +27,13 @@ const normCustomer = (c) => JSON.stringify([
 ]);
 const shippingDraft = (s) => ({
   ...EMPTY_SHIPPING,
-  ...Object.fromEntries(Object.entries(s ?? {}).filter(([k]) => k !== 'amount').map(([k, v]) => [k, v ?? ''])),
+  ...Object.fromEntries(Object.entries(s ?? {}).filter(([k]) => k !== 'amount' && k !== 'homeServiceAmount').map(([k, v]) => [k, v ?? ''])),
   amount: moneyText(s?.amount),
+  homeService: s?.homeServiceAmount != null,
+  homeAmount: moneyText(s?.homeServiceAmount),
 });
 const SHIP_KEYS = ['street', 'number', 'floor', 'city', 'zip', 'phone', 'notes'];
-const normShipping = (s, amount) => JSON.stringify([...SHIP_KEYS.map((k) => String(s?.[k] ?? '').trim()), amount]);
+const normShipping = (s, amount, home) => JSON.stringify([...SHIP_KEYS.map((k) => String(s?.[k] ?? '').trim()), amount, home]);
 
 // Funciona con el objeto de campos o con una función (último valor) -> campos.
 const draftUpdater = (setter) => (change) => setter((prev) => ({ ...prev, ...(typeof change === 'function' ? change(prev) : change) }));
@@ -131,7 +133,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   async function saveShipping() {
     const errors = shippingErrors(shipping);
     if (errors.length) { setNotice({ kind: 'error', text: errors.join('. ') }); return; }
-    await patch({ shipping: { ...shipping, amount: parseMoney(shipping.amount).value } });
+    await patch({ shipping: shippingBody(shipping) });
   }
   const saveNotes = () => patch({ notes });
 
@@ -176,8 +178,10 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
 
   const customerDirty = editable && normCustomer(customer) !== normCustomer(order.customer);
   const shippingParsed = parseMoney(shipping.amount);
+  const homeParsed = parseMoney(shipping.homeAmount);
   const shippingDirty = editable && needsShipping
-    && normShipping(shipping, shippingParsed.ok ? shippingParsed.value : null) !== normShipping(order.shipping, order.shipping?.amount ?? null);
+    && normShipping(shipping, shippingParsed.ok ? shippingParsed.value : null, shipping.homeService ? (homeParsed.ok ? homeParsed.value : null) : null)
+      !== normShipping(order.shipping, order.shipping?.amount ?? null, order.shipping?.homeServiceAmount ?? null);
   const blockers = [];
   if (customerDirty) blockers.push('Guardá los cambios del cliente');
   if (editable && needsShipping && (shippingDirty || !order.shipping)) blockers.push('Guardá los datos del envío');
@@ -261,7 +265,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
 
           {editable && needsShipping && (
             <div className={styles.saveBlock}>
-              <ShippingFields value={shipping} onChange={draftUpdater(setShipping)} />
+              <ShippingFields value={shipping} onChange={draftUpdater(setShipping)} defaultHomeAmount={config?.settings?.homeServiceDefaultAmount} />
               <button type="button" className="btn btn-secondary" disabled={busy || confirming || !shippingDirty} onClick={saveShipping}>Guardar envío</button>
             </div>
           )}
@@ -271,6 +275,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
               <p>{order.shipping.street} {order.shipping.number}{order.shipping.floor ? `, ${order.shipping.floor}` : ''} · {order.shipping.city} ({order.shipping.zip}) · Tel. {order.shipping.phone}</p>
               {order.shipping.notes && <p className={styles.muted}>{order.shipping.notes}</p>}
               <p className={styles.muted}>Costo: {formatMoney(order.shipping.amount)}</p>
+              {order.shipping.homeServiceAmount != null && <p className={styles.muted}>Subida al domicilio: {formatMoney(order.shipping.homeServiceAmount)}</p>}
             </section>
           )}
 
