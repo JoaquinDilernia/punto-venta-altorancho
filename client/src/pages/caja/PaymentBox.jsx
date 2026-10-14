@@ -80,6 +80,8 @@ export default function PaymentBox({
     if (!desired) {
       if (mode === 'split') paymentBlockers.push('Completá los medios y montos del pago dividido');
       else paymentBlockers.push(single.methodId && needsDetail(single.methodId) ? 'Elegí las cuotas' : 'Elegí el medio de pago');
+    } else if (mode === 'split' && totals && Math.abs(round2(totals.total - desired.reduce((sum, d) => sum + d.amount, 0))) >= 0.01) {
+      paymentBlockers.push(`Los pagos tienen que sumar el total (${formatMoney(totals.total)})`);
     } else if (keyOf(desired) !== keyOf(saved)) {
       if (mode === 'split') paymentBlockers.push('Tocá "Aplicar pago dividido"');
       else paymentBlockers.push(busy ? 'Se está guardando el medio de pago' : 'No se guardó el medio de pago: volvé a elegirlo');

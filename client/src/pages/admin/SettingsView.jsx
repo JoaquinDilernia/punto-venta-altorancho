@@ -14,6 +14,7 @@ function toForm(s) {
     webLocationId: s.web?.locationId ?? null,
     fullPricelistId: s.fullPricelistId ?? null,
     promoPricelistId: s.promoPricelistId ?? null,
+    orderPricelistId: s.orderPricelistId ?? null,
     shippingProductSku: s.shippingProductSku ?? '',
     decoradorTagId: s.decoradorTagId ?? null,
   };
@@ -45,6 +46,7 @@ export default function SettingsView() {
           web: { locationId: form.webLocationId },
           fullPricelistId: form.fullPricelistId,
           promoPricelistId: form.promoPricelistId,
+          orderPricelistId: form.orderPricelistId,
           shippingProductSku: form.shippingProductSku.trim(),
           decoradorTagId: form.decoradorTagId,
         },
@@ -81,6 +83,8 @@ export default function SettingsView() {
           <h2 className={styles.cardTitle}>Precios</h2>
           <OdooSelect label="Lista de precios full" options={opts.pricelists} value={form.fullPricelistId} onChange={set('fullPricelistId')} empty="Usar el precio de venta del producto" />
           <OdooSelect label="Lista de precios promocional" options={opts.pricelists} value={form.promoPricelistId} onChange={set('promoPricelistId')} empty="Sin lista promocional" />
+          <OdooSelect label="Lista de precios para pedidos en Odoo (sin IVA)" options={opts.pricelists} value={form.orderPricelistId} onChange={set('orderPricelistId')} empty="Sin lista (precio del producto)" />
+          <p className={styles.hint}>Debe ser una lista SIN IVA (ej. Lista Minorista): Odoo recibe precios sin IVA.</p>
           <p className={styles.hint}>Las listas cambian de nombre cada mes en Odoo: actualizalas acá cuando cambien.</p>
 
           <h2 className={styles.cardTitle}>Otros</h2>
