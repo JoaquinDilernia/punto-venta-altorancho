@@ -14,7 +14,7 @@ const STATUS_FILTERS = [
 ];
 
 // Ventas del mes del local, con filtros. Abrir una fila va al detalle (lo maneja CajaPanel).
-export default function HistoryView({ config, onOpen }) {
+export default function HistoryView({ config, scope, onOpen }) {
   const months = useMemo(() => monthOptions(6), []);
   const [month, setMonth] = useState(months[0].value);
   const [orders, setOrders] = useState([]);
@@ -29,14 +29,14 @@ export default function HistoryView({ config, onOpen }) {
     setLoading(true);
     setError('');
     try {
-      const found = await api(`/history?months=${month}`);
+      const found = await api(`/history?months=${month}${scope ? `&localId=${encodeURIComponent(scope)}` : ''}`);
       if (id === seq.current) setOrders(found);
     } catch (err) {
       if (id === seq.current) { setOrders([]); setError(`No se pudo cargar el historial: ${err.message}`); }
     } finally {
       if (id === seq.current) setLoading(false);
     }
-  }, [month]);
+  }, [month, scope]);
 
   useEffect(() => { load(); }, [load]);
 

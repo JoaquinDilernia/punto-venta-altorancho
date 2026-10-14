@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
-import { getSession } from '../../lib/session.js';
 import { formatMoney } from '../../lib/labels.js';
 import { EmptyState, Notice } from '../../components/ui.jsx';
 import ProductSearch from '../../components/ProductSearch.jsx';
@@ -14,8 +13,7 @@ import styles from './caja.module.css';
 // cliente -> enviar a caja) en layout de escritorio. Al enviarlo se abre en
 // "Pedidos" para cobrarlo. El carrito vive en el servidor; CajaPanel mantiene
 // esta vista montada para no perder lo tipeado al cambiar de sección.
-export default function NewOrderView({ config, onSubmitted }) {
-  const user = getSession('caja')?.user;
+export default function NewOrderView({ config, localId, scope, onSubmitted }) {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
@@ -32,12 +30,13 @@ export default function NewOrderView({ config, onSubmitted }) {
   // Si había un carrito abierto (otra pestaña, recarga) se retoma el más viejo.
   useEffect(() => {
     let alive = true;
-    api('/carts')
+    // El admin no tiene carritos propios por local: arranca vacío.
+    (scope ? Promise.resolve([]) : api('/carts'))
       .then((mine) => { if (alive) setCart(mine[0] ?? null); })
       .catch((err) => alive && setNotice(err.message))
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
-  }, []);
+  }, [scope]);
 
   const lines = activeLinesOf(cart);
   const hasEnvio = lines.some((l) => l.delivery === 'envio');
@@ -62,7 +61,7 @@ export default function NewOrderView({ config, onSubmitted }) {
     const line = lineBody({ ...v, productId: product.productId });
     const order = cart
       ? await api(`/carts/${cart.id}/lines`, { method: 'POST', body: { line } })
-      : await api('/carts', { method: 'POST', body: { line } });
+      : await api('/carts', { method: 'POST', body: scope ? { line, localId: scope } : { line } });
     setCart(order);
     setNotice('');
     setDialog(null);
@@ -108,7 +107,7 @@ export default function NewOrderView({ config, onSubmitted }) {
       </header>
       <div className={styles.newGrid}>
         <div className={styles.newSearch}>
-          {loading ? <p className={styles.muted}>Cargando…</p> : <ProductSearch payMethods={payMethods} onPick={(product) => setDialog({ product })} />}
+          {loading ? <p className={styles.muted}>Cargando…</p> : <ProductSearch payMethods={payMethods} localId={scope} onPick={(product) => setDialog({ product })} />}
         </div>
 
         <section className={styles.newCart} aria-label="Carrito">
@@ -146,7 +145,7 @@ export default function NewOrderView({ config, onSubmitted }) {
           product={dialog.product}
           line={dialog.line}
           locales={locales}
-          ownLocalId={user?.localId}
+          ownLocalId={localId}
           onConfirm={(v) => (dialog.product ? addLine(dialog.product, v) : editLine(dialog.line, v))}
           onClose={() => setDialog(null)}
         />

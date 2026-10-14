@@ -11,6 +11,8 @@ import HistoryView from './HistoryView.jsx';
 import ProductsView from './ProductsView.jsx';
 
 const REFRESH_MS = 15 * 1000;
+const LOCAL_KEY = 'pos_caja_local';
+const isAdminRole = (role) => role === 'admin' || role === 'superadmin';
 const BACK_LABELS = { pedidos: 'Volver a pedidos', historial: 'Volver al historial' };
 
 export default function CajaPanel() {
@@ -22,7 +24,16 @@ export default function CajaPanel() {
   const [queue, setQueue] = useState([]);
   const [queueLoaded, setQueueLoaded] = useState(false);
   const [queueError, setQueueError] = useState('');
+  const [chosenLocal, setChosenLocal] = useState(() => localStorage.getItem(LOCAL_KEY));
   const seq = useRef(0);
+
+  // Admin: elige el local (se recuerda). Caja: siempre el suyo y no se manda localId.
+  const admin = isAdminRole(user?.role);
+  const locales = config?.locales ?? [];
+  const localId = admin
+    ? (locales.some((l) => l.id === chosenLocal) ? chosenLocal : (locales[0]?.id ?? null))
+    : (user?.localId ?? null);
+  const scope = admin ? localId : null; // lo que viaja al backend
 
   useEffect(() => {
     let alive = true;
@@ -36,7 +47,7 @@ export default function CajaPanel() {
   const loadQueue = useCallback(async () => {
     const id = ++seq.current;
     try {
-      const found = await api('/orders/queue');
+      const found = await api(`/orders/queue${scope ? `?localId=${encodeURIComponent(scope)}` : ''}`);
       if (id !== seq.current) return;
       setQueue(found);
       setQueueError('');
@@ -45,7 +56,7 @@ export default function CajaPanel() {
     } finally {
       if (id === seq.current) setQueueLoaded(true);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     loadQueue();
@@ -60,6 +71,13 @@ export default function CajaPanel() {
     };
   }, [loadQueue]);
 
+  function chooseLocal(id) {
+    localStorage.setItem(LOCAL_KEY, id);
+    setChosenLocal(id);
+    setQueue([]);
+    setQueueLoaded(false);
+    setOrderId(null);
+  }
   function select(next) {
     setView(next);
     setOrderId(null);
@@ -69,7 +87,7 @@ export default function CajaPanel() {
     setOrderId(id);
   }
 
-  const localName = config?.locales?.find((l) => l.id === user?.localId)?.name;
+  const localName = locales.find((l) => l.id === localId)?.name;
   const items = [
     { value: 'pedidos', label: 'Pedidos', badge: queue.length },
     { value: 'nuevo', label: 'Nuevo pedido' },
@@ -81,13 +99,15 @@ export default function CajaPanel() {
   let body;
   if (configError) body = <Notice kind="error">{`No se pudo cargar la configuración: ${configError}`}</Notice>;
   else if (!config) body = <p>Cargando…</p>;
+  else if (!localId) body = <Notice kind="error">Tu usuario no tiene un local asignado.</Notice>;
   else {
     const detail = orderId && (view === 'pedidos' || view === 'historial');
     body = (
-      <>
+      <div key={localId}>
         {detail && (
           <OrderDetail
             key={orderId}
+            localId={localId}
             orderId={orderId}
             config={config}
             backLabel={BACK_LABELS[view]}
@@ -101,17 +121,24 @@ export default function CajaPanel() {
         )}
         {/* Siempre montado: conserva el carrito y lo tipeado al cambiar de sección. */}
         <div hidden={view !== 'nuevo'}>
-          <NewOrderView config={config} onSubmitted={(id) => { loadQueue(); openOrder('pedidos', id); }} />
+          <NewOrderView config={config} localId={localId} scope={scope} onSubmitted={(id) => { loadQueue(); openOrder('pedidos', id); }} />
         </div>
-        {view === 'caja' && <CashDayView config={config} />}
-        {view === 'historial' && !orderId && <HistoryView config={config} onOpen={(id) => openOrder('historial', id)} />}
-        {view === 'productos' && <ProductsView config={config} />}
-      </>
+        {view === 'caja' && <CashDayView config={config} scope={scope} />}
+        {view === 'historial' && !orderId && <HistoryView config={config} scope={scope} onOpen={(id) => openOrder('historial', id)} />}
+        {view === 'productos' && <ProductsView config={config} scope={scope} />}
+      </div>
     );
   }
 
   return (
-    <SidebarShell panel="caja" subtitle={localName} userName={user?.name} items={items} active={view} onSelect={select}>
+    <SidebarShell panel="caja" subtitle={localName} userName={user?.name} items={items} active={view} onSelect={select} extra={admin && locales.length > 0 && (
+      <label className="field" style={{ padding: '0 6px' }}>
+        <span className="field-label">Local</span>
+        <select className="select select-sm" value={localId ?? ''} onChange={(e) => chooseLocal(e.target.value)}>
+          {locales.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>
+      </label>
+    )}>
       {body}
     </SidebarShell>
   );

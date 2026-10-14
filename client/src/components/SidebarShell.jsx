@@ -4,7 +4,7 @@ import styles from './SidebarShell.module.css';
 
 // Layout de escritorio de Caja y Admin: menú a la izquierda, contenido a la
 // derecha. `items`: [{ value, label, badge? }].
-export default function SidebarShell({ panel, subtitle, userName, items, active, onSelect, children }) {
+export default function SidebarShell({ panel, subtitle, userName, items, active, onSelect, extra, children }) {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
@@ -15,6 +15,7 @@ export default function SidebarShell({ panel, subtitle, userName, items, active,
             {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
           </div>
         </div>
+        {extra}
         <nav className={styles.nav} aria-label="Secciones">
           {items.map((item) => (
             <button

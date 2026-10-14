@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300;
 // Buscador del vendedor. `payMethods`: medios de pago con descuento (solo
 // informativo: el precio a cobrar es el de lista/promo). `onPick(product)`.
 // Sin `onPick` es solo consulta (sin botón Agregar).
-export default function ProductSearch({ payMethods, onPick }) {
+export default function ProductSearch({ payMethods, onPick, localId = null }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export default function ProductSearch({ payMethods, onPick }) {
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const found = await api(`/products/search?q=${encodeURIComponent(q)}`);
+        const found = await api(`/products/search?q=${encodeURIComponent(q)}${localId ? `&localId=${encodeURIComponent(localId)}` : ""}`);
         if (id === seq.current) { setResults(found); setError(''); }
       } catch (err) {
         if (id === seq.current) { setResults([]); setError(err.message); }
@@ -39,7 +39,7 @@ export default function ProductSearch({ payMethods, onPick }) {
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, localId]);
 
   const short = query.trim().length < MIN_CHARS;
 

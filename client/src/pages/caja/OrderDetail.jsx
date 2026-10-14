@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
-import { getSession } from '../../lib/session.js';
 import { formatMoney } from '../../lib/labels.js';
 import { formatDateTime } from '../../lib/format.js';
 import { Notice, OrderStatusChip } from '../../components/ui.jsx';
@@ -39,8 +38,7 @@ const draftUpdater = (setter) => (change) => setter((prev) => ({ ...prev, ...(ty
 
 // Pedido de caja: líneas, cliente, envío y cobro. Sirve para la cola y para el
 // historial. Los totales los calcula siempre el servidor (`preview`).
-export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCash, onChanged }) {
-  const user = getSession('caja')?.user;
+export default function OrderDetail({ orderId, localId, config, backLabel, onBack, onGoCash, onChanged }) {
   const [data, setData] = useState(null); // { order, preview }
   const [loadError, setLoadError] = useState('');
   const [customer, setCustomer] = useState(null);
@@ -48,6 +46,7 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
   const [notes, setNotes] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState({ kind: 'error', text: '' });
+  const [payError, setPayError] = useState(''); // errores de cobro: se ven dentro de PaymentBox
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState(null);
   const [dialog, setDialog] = useState(null); // { product } | { line }
@@ -79,14 +78,16 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
 
   // Ejecuta un cambio y vuelve a pedir el pedido (y su preview). Devuelve la
   // respuesta del GET, o null si el cambio falló.
-  async function mutate(fn) {
+  async function mutate(fn, toPay = false) {
     setBusy(true);
     setNotice({ kind: 'error', text: '' });
+    if (toPay) setPayError('');
     try {
       await fn();
       return await load();
     } catch (err) {
-      setNotice({ kind: 'error', text: err.message });
+      if (toPay) setPayError(err.message);
+      else setNotice({ kind: 'error', text: err.message });
       await load();
       return null;
     } finally {
@@ -94,6 +95,7 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
     }
   }
   const patch = (body) => mutate(() => api(`/orders/${orderId}`, { method: 'PATCH', body }));
+  const patchPayment = (body) => mutate(() => api(`/orders/${orderId}`, { method: 'PATCH', body }), true);
 
   const order = data?.order ?? null;
   const preview = data?.preview ?? null;
@@ -181,8 +183,8 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
   if (editable && needsShipping && (shippingDirty || !order.shipping)) blockers.push('Guardá los datos del envío');
   if (editable && !order.customer) blockers.push('Falta cargar el cliente');
   const notesDirty = notes !== (order.notes ?? '');
-  const canAnnul = ['pendiente', 'error', 'confirmado'].includes(status);
-  const canRetryInvoice = status === 'confirmado' && order.wantsInvoice && !order.invoiceName && locale?.invoices !== false;
+  const canAnnul = status === 'confirmado' || (['pendiente', 'error'].includes(status) && !inOdoo);
+  const canRetryInvoice = status === 'confirmado' && order.wantsInvoice && !order.invoiceName && Boolean(order.invoiceError) && locale?.invoices !== false;
 
   return (
     <div className={styles.detail}>
@@ -250,6 +252,7 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
                 <summary className="btn btn-secondary btn-sm">Agregar producto</summary>
                 <ProductSearch
                   payMethods={[]}
+                  localId={order.localId}
                   onPick={(product) => setDialog({ product })}
                 />
               </details>
@@ -334,7 +337,8 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
           blockers={blockers}
           confirming={confirming}
           confirmError={confirmError}
-          onPatch={patch}
+          payError={payError}
+          onPatch={patchPayment}
           onConfirm={confirm}
           onGoCash={onGoCash}
         />
@@ -346,7 +350,7 @@ export default function OrderDetail({ orderId, config, backLabel, onBack, onGoCa
           product={dialog.product}
           line={dialog.line}
           locales={locales}
-          ownLocalId={user?.localId}
+          ownLocalId={order.localId ?? localId}
           onConfirm={(v) => (dialog.product ? addLine(dialog.product, v) : editLine(dialog.line, v))}
           onClose={() => setDialog(null)}
         />

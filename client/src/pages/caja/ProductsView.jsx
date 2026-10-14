@@ -3,7 +3,7 @@ import ProductSearch from '../../components/ProductSearch.jsx';
 import styles from './caja.module.css';
 
 // Consulta de productos: stock completo y precio por medio de pago. No agrega nada a ningún pedido.
-export default function ProductsView({ config }) {
+export default function ProductsView({ config, scope }) {
   const payMethods = useMemo(
     () => (config.paymentMethods ?? []).filter((m) => m.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [config],
@@ -13,7 +13,7 @@ export default function ProductsView({ config }) {
       <header className={styles.viewHead}>
         <h1 className={styles.viewTitle}>Productos</h1>
       </header>
-      <ProductSearch payMethods={payMethods} />
+      <ProductSearch payMethods={payMethods} localId={scope} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatMoney } from '../../lib/labels.js';
 import { round2 } from '../../lib/format.js';
 import { Notice } from '../../components/ui.jsx';
@@ -33,7 +33,7 @@ function MethodSelect({ methods, row, onChange, disabled }) {
 // (o de `order.totals` si el pedido ya no se puede cambiar).
 // `onPatch(body)` devuelve la respuesta de `GET /orders/:id` posterior o null.
 export default function PaymentBox({
-  order, preview, config, locale, busy, editable, canConfirm, blockers, confirming, confirmError,
+  order, preview, config, locale, busy, payError, editable, canConfirm, blockers, confirming, confirmError,
   onPatch, onConfirm, onGoCash,
 }) {
   const methods = (config.paymentMethods ?? []).filter((m) => m.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -53,6 +53,16 @@ export default function PaymentBox({
   const extra = preview ? preview.extraDiscount : order.extraDiscount;
   const previewError = preview?.error ?? '';
   const disabled = busy || confirming;
+  const invoicesOk = locale?.invoices !== false;
+
+  // Un local que no factura no puede tener la factura pedida: se apaga una sola vez.
+  const clearedInvoice = useRef(false);
+  useEffect(() => {
+    if (editable && !invoicesOk && order.wantsInvoice && !clearedInvoice.current) {
+      clearedInvoice.current = true;
+      onPatch({ wantsInvoice: false });
+    }
+  });
 
   const needsDetail = (id) => (methodById.get(id)?.details?.length ?? 0) > 0;
   const rowComplete = (r) => Boolean(r.methodId) && (!needsDetail(r.methodId) || Boolean(r.detailId));
@@ -67,8 +77,13 @@ export default function PaymentBox({
     : rowsPayload();
   const paymentBlockers = [];
   if (editable) {
-    if (!desired) paymentBlockers.push(mode === 'split' ? 'Completá los medios y montos del pago dividido' : 'Elegí el medio de pago');
-    else if (keyOf(desired) !== keyOf(saved)) paymentBlockers.push(mode === 'split' ? 'Tocá "Aplicar pago dividido"' : 'Se está guardando el medio de pago');
+    if (!desired) {
+      if (mode === 'split') paymentBlockers.push('Completá los medios y montos del pago dividido');
+      else paymentBlockers.push(single.methodId && needsDetail(single.methodId) ? 'Elegí las cuotas' : 'Elegí el medio de pago');
+    } else if (keyOf(desired) !== keyOf(saved)) {
+      if (mode === 'split') paymentBlockers.push('Tocá "Aplicar pago dividido"');
+      else paymentBlockers.push(busy ? 'Se está guardando el medio de pago' : 'No se guardó el medio de pago: volvé a elegirlo');
+    }
   }
   const allBlockers = [...paymentBlockers, ...blockers];
   const confirmDisabled = disabled || !canConfirm || Boolean(previewError) || allBlockers.length > 0;
@@ -96,6 +111,8 @@ export default function PaymentBox({
     if (first) {
       setSingle({ methodId: first.methodId, detailId: first.detailId });
       onPatch({ payments: [{ methodId: first.methodId, detailId: first.detailId || null }] });
+    } else {
+      setSingle({ methodId: '', detailId: '' });
     }
   }
   const setRow = (i, change) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...change } : r)));
@@ -126,13 +143,12 @@ export default function PaymentBox({
 
   const choice = order.discountChoice;
   const cuitNoIva = order.wantsInvoice && String(order.customer?.docNumber ?? '').replace(/\D/g, '').length === 11 && !order.customer?.afipResponsibility;
-  const invoicesOk = locale?.invoices !== false;
-
   return (
     <aside className={styles.payBox} aria-label="Cobro">
       <div className={styles.payBody}>
         <h2 className={styles.payTitle}>Cobro</h2>
         <Notice kind="error">{previewError && !choice ? previewError : ''}</Notice>
+        <Notice kind="error">{payError}</Notice>
 
         {editable ? (
           <>
@@ -168,6 +184,7 @@ export default function PaymentBox({
               ) : (
                 <>
                   <p className={styles.hint}>{SPLIT_WARNING}</p>
+                  <p className={styles.hint}>El total se recalcula al aplicar: con pago dividido vale el menor descuento</p>
                   {rows.map((r, i) => (
                     <div key={i} className={styles.splitRow}>
                       <MethodSelect methods={methods} row={r} disabled={disabled} onChange={(change) => setRow(i, change)} />

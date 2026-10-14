@@ -100,7 +100,8 @@ function Movements({ movements, busy, voidId, onAskVoid, onVoid, onCancelVoid })
 
 // Caja del día: abrir con el fondo, resumen por medio de pago, gastos / retiros /
 // dólares, observación y cierre contando el efectivo.
-export default function CashDayView({ config, onChanged }) {
+export default function CashDayView({ config, scope, onChanged }) {
+  const withScope = scope ? { localId: scope } : {};
   const [current, setCurrent] = useState(null); // { session, summary, lastClosed }
   const [error, setError] = useState('');
   const [notice, setNotice] = useState({ kind: 'success', text: '' });
@@ -119,7 +120,7 @@ export default function CashDayView({ config, onChanged }) {
   const load = useCallback(async () => {
     const id = ++seq.current;
     try {
-      const cur = await api('/cash/current');
+      const cur = await api(`/cash/current${scope ? `?localId=${encodeURIComponent(scope)}` : ''}`);
       if (id !== seq.current) return;
       setCurrent(cur);
       if (!notesDirty.current) setNotes(cur.session?.notes ?? '');
@@ -127,7 +128,7 @@ export default function CashDayView({ config, onChanged }) {
     } catch (err) {
       if (id === seq.current) setError(`No se pudo cargar la caja: ${err.message}`);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     load();
@@ -155,7 +156,7 @@ export default function CashDayView({ config, onChanged }) {
     e.preventDefault();
     const amount = parseMoney(openingCash);
     if (!amount.ok) { setNotice({ kind: 'error', text: 'Escribí el fondo inicial en pesos (puede ser 0), por ejemplo 20.000' }); return; }
-    const ok = await run(() => api('/cash/open', { method: 'POST', body: { openingCash: amount.value } }), `Caja abierta con ${formatMoney(amount.value)} de fondo. Ya se pueden confirmar ventas.`);
+    const ok = await run(() => api('/cash/open', { method: 'POST', body: { openingCash: amount.value, ...withScope } }), `Caja abierta con ${formatMoney(amount.value)} de fondo. Ya se pueden confirmar ventas.`);
     if (!ok) return;
     setOpeningCash('');
     setClosed(null);
@@ -180,17 +181,17 @@ export default function CashDayView({ config, onChanged }) {
       if (!amount.ok || amount.value <= 0) { setNotice({ kind: 'error', text: 'Escribí el monto que sale de la caja.' }); return; }
       body.amount = amount.value;
     }
-    const ok = await run(() => api('/cash/movements', { method: 'POST', body }), `${TYPE_LABELS[type]} registrado.`);
+    const ok = await run(() => api('/cash/movements', { method: 'POST', body: { ...body, ...withScope } }), `${TYPE_LABELS[type]} registrado.`);
     if (ok) setMovement((m) => ({ ...m, concept: '', amount: '', usdAmount: '', rate: '' }));
   }
 
   async function voidMovement(m) {
     setVoidId(null);
-    await run(() => api(`/cash/movements/${m.id}/void`, { method: 'POST' }), 'Movimiento anulado.');
+    await run(() => api(`/cash/movements/${m.id}/void`, { method: 'POST', body: scope ? { localId: scope } : undefined }), 'Movimiento anulado.');
   }
 
   async function saveNotes() {
-    const ok = await run(() => api('/cash/notes', { method: 'PATCH', body: { notes } }), 'Observación guardada.');
+    const ok = await run(() => api('/cash/notes', { method: 'PATCH', body: { notes, ...withScope } }), 'Observación guardada.');
     if (ok) notesDirty.current = false;
   }
 
@@ -198,7 +199,7 @@ export default function CashDayView({ config, onChanged }) {
     const counted = parseMoney(countedCash);
     if (!counted.ok) { setNotice({ kind: 'error', text: 'Contá el efectivo de la caja y escribí el monto.' }); setConfirmClose(false); return; }
     // La observación viaja con el cierre aunque no se haya guardado aparte.
-    const result = await run(() => api('/cash/close', { method: 'POST', body: { countedCash: counted.value, notes } }));
+    const result = await run(() => api('/cash/close', { method: 'POST', body: { countedCash: counted.value, notes, ...withScope } }));
     setConfirmClose(false);
     if (!result || result === true) return;
     setClosed(result.summary ?? null);
