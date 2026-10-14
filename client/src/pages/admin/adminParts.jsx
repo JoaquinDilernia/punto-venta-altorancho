@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import styles from './admin.module.css';
 
-export const isSuper = (user) => user?.role === 'superadmin';
-
 // Carga un GET al montar y expone recargar. Sólo vale la última respuesta.
 export function useApiData(path) {
   const [state, setState] = useState({ data: null, error: '', loading: true });

@@ -20,7 +20,12 @@ const fullDate = new Intl.DateTimeFormat('es-AR', {
 const saleMs = (o) => toMs(o.confirmedAt ?? o.sentAt ?? o.createdAt);
 
 // Celdas del CSV entre comillas; separador ";" y BOM para que Excel (es-AR) lo abra bien.
-const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+// Las celdas que empiezan con = + - @ se prefijan con ' para que Excel no las tome como fórmula.
+const csvCell = (v) => {
+  const text = String(v ?? '');
+  const safe = /^\s*[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
 
 export default function AdminHistoryView() {
   const months = useMemo(() => monthOptions(6), []);

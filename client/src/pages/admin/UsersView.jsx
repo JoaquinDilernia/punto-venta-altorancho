@@ -36,11 +36,15 @@ export default function UsersView() {
   function openEdit(u) {
     setError('');
     setNotice('');
-    setEditing({ id: u.id, name: u.name, role: u.role, localId: u.localId ?? '', pin: '', username: u.username ?? '', password: '', active: u.active !== false });
+    setEditing({ id: u.id, origRole: u.role, name: u.name, role: u.role, localId: u.localId ?? '', pin: '', username: u.username ?? '', password: '', active: u.active !== false });
   }
 
   async function save() {
     const f = editing;
+    const toVendedor = f.role === 'vendedor';
+    const groupChanged = Boolean(f.id) && (f.origRole === 'vendedor') !== toVendedor;
+    if (groupChanged && toVendedor && !f.pin) { setError('Al pasar a vendedor cargá un PIN'); return; }
+    if (groupChanged && !toVendedor && (!f.username.trim() || !f.password)) { setError('Al pasar a caja/admin cargá usuario y contraseña'); return; }
     const body = { name: f.name.trim(), role: f.role, active: f.active };
     if (needsLocal(f.role)) body.localId = f.localId;
     if (f.role === 'vendedor') {

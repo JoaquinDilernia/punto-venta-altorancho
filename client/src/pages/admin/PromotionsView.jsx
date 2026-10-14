@@ -51,7 +51,7 @@ export default function PromotionsView() {
     const value = parseMoney(f.value);
     if (!f.name.trim()) { setError('Falta el nombre'); return; }
     if (!value.ok || value.value <= 0) { setError(f.type === 'pct' ? 'Escribí el porcentaje de descuento' : 'Escribí el monto del descuento'); return; }
-    if (f.type === 'pct' && value.value > 100) { setError('El porcentaje tiene que estar entre 1 y 100'); return; }
+    if (f.type === 'pct' && (value.value < 1 || value.value > 100)) { setError('El porcentaje tiene que estar entre 1 y 100'); return; }
     if (f.kind === 'cupon' && !f.code.trim()) { setError('El cupón necesita un código'); return; }
     if (f.from && f.to && f.from > f.to) { setError('La fecha "desde" es posterior a "hasta"'); return; }
     const body = {
