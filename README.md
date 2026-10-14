@@ -33,3 +33,18 @@ Las rutas usan hash, así que cualquier host estático alcanza (sirve
 
 Cada panel guarda su propia sesión en el navegador, así que se pueden tener
 abiertos a la vez en pestañas distintas.
+
+## Despliegue
+
+Producción: `https://puntoventa.altorancho.com`, backend en
+`https://reportes-altorancho-production.up.railway.app`.
+
+```bash
+cd client
+VITE_API_URL=https://reportes-altorancho-production.up.railway.app npm run build
+```
+
+Verificar que `client/dist/assets/*.js` exista después del build (Dropbox a
+veces bloquea `dist`: si falla, reintentar). Luego subir el contenido de
+`client/dist` al hosting estático de `puntoventa.altorancho.com`. Las rutas
+son `/#/vendedor`, `/#/caja` y `/#/admin`.
