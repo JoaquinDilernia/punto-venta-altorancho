@@ -36,3 +36,4 @@
 .rlControls .qty { margin-right: auto; }
 .rlControls :global(.select), .rl :global(.input) { font-size: 16px; }
 .rlControls :global(.select) { width: auto; }
+.fieldError { font-size: var(--fs-sm); color: var(--removed); font-weight: 500; }

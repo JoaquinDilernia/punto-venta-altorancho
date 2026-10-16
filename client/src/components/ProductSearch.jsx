@@ -10,8 +10,8 @@ const DEBOUNCE_MS = 300;
 
 // Buscador del vendedor. `payMethods`: medios de pago con descuento (solo
 // informativo: el precio a cobrar es el de lista/promo). `onPick(product)`.
-// Sin `onPick` es solo consulta (sin botón Agregar).
-export default function ProductSearch({ payMethods, onPick, localId = null }) {
+// Sin `onPick` es solo consulta (sin botón Agregar). `pickLabel`: texto del botón.
+export default function ProductSearch({ payMethods, onPick, localId = null, pickLabel = 'Agregar' }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export default function ProductSearch({ payMethods, onPick, localId = null }) {
                 )}
                 <StockBadges stock={p.stock} />
               </div>
-              {onPick && <button type="button" className="btn btn-primary" onClick={() => onPick(p)}>Agregar</button>}
+              {onPick && <button type="button" className="btn btn-primary" onClick={() => onPick(p)}>{pickLabel}</button>}
             </li>
           );
         })}

@@ -9,6 +9,15 @@ import styles from './ReturnPicker.module.css';
 const MIN_CHARS = 3;
 const OTHER = 'Otro';
 
+// El backend avisa "tpv: <motivo>" cuando una fuente no respondió.
+function searchErrorText(raw) {
+  const text = String(raw ?? '');
+  const i = text.indexOf(': ');
+  if (i < 0) return `No se pudo buscar: ${text}`;
+  const source = text.slice(0, i);
+  return `No se pudo buscar en ${SOURCE_LABELS[source] ?? source}: ${text.slice(i + 2)}`;
+}
+
 // Hoja de "Devolver": cantidad, destino, motivo y valor de la línea.
 function ReturnSheet({ line, config, locale, dialog, onConfirm, onCancel }) {
   const manual = line.source === 'manual';
@@ -50,7 +59,9 @@ function ReturnSheet({ line, config, locale, dialog, onConfirm, onCancel }) {
           <span className="field-label">Motivo</span>
           <div className={styles.reasons}>
             {reasons.map((r) => (
-              <button key={r} type="button" className={`btn btn-secondary ${reason === r ? styles.reasonOn : ''}`} aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>
+              <button key={r} type="button" className={`btn btn-secondary ${reason === r ? styles.reasonOn : ''}`} aria-pressed={reason === r} onClick={() => setReason(r)}>
+                {reason === r && <span aria-hidden="true">✓ </span>}{r}
+              </button>
             ))}
           </div>
           {needsNote && (
@@ -81,11 +92,16 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
   const [sheetLine, setSheetLine] = useState(null);
   const seq = useRef(0);
 
+  // Escape cierra primero la hoja abierta y recién después el buscador.
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (sheetLine) setSheetLine(null);
+      else onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, sheetLine]);
 
   async function search(e) {
     e?.preventDefault();
@@ -98,7 +114,7 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
       const r = await api(`/returns/search?q=${encodeURIComponent(q)}`);
       if (id !== seq.current) return;
       setResults(r.purchases ?? []);
-      setErrors(r.errors ?? []);
+      setErrors((r.errors ?? []).map(searchErrorText));
     } catch (err) {
       if (id !== seq.current) return;
       setResults(null);
@@ -136,10 +152,16 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
     }
   }
 
-  function confirm(values) {
+  // `onPick` puede devolver una promesa: si falla, el error del servidor se ve acá.
+  async function confirm(values) {
     const line = sheetLine;
     setSheetLine(null);
-    onPick({ source: line.source, purchaseId: line.purchaseId, purchaseLineId: line.purchaseLineId, productId: line.productId }, line, values);
+    setError('');
+    try {
+      await onPick({ source: line.source, purchaseId: line.purchaseId, purchaseLineId: line.purchaseLineId, productId: line.productId }, line, values);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   const back = () => { seq.current += 1; setMode('search'); setPurchase(null); setError(''); setLoading(false); };
@@ -219,7 +241,7 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
         {mode === 'manual' && (
           <>
             <button type="button" className="btn btn-ghost" onClick={back}>← Volver a la búsqueda</button>
-            <ProductSearch payMethods={[]} localId={localId} onPick={pickManual} />
+            <ProductSearch payMethods={[]} localId={localId} onPick={pickManual} pickLabel="Devolver" />
           </>
         )}
       </div>

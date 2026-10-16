@@ -3,7 +3,8 @@ import { api } from '../lib/api.js';
 import { formatMoney } from '../lib/labels.js';
 import { Chip } from './ui.jsx';
 
-export default function CreditBadge({ doc }) {
+// `emptyText`: qué mostrar si el cliente no tiene saldo (por defecto, nada).
+export default function CreditBadge({ doc, emptyText = null }) {
   const [credit, setCredit] = useState(null);
   const digits = String(doc ?? '').replace(/\D/g, '');
   useEffect(() => {
@@ -13,7 +14,7 @@ export default function CreditBadge({ doc }) {
     api(`/credits?doc=${digits}`).then((r) => alive && setCredit(r)).catch(() => {});
     return () => { alive = false; };
   }, [digits]);
-  if (!credit?.balance) return null;
+  if (!credit?.balance) return credit && emptyText ? <Chip>{emptyText}</Chip> : null;
   const first = credit.credits?.[0];
   const raw = first?.expiresAt;
   const date = raw ? new Date(raw._seconds ? raw._seconds * 1000 : raw) : null;
