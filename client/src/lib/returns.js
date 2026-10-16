@@ -24,7 +24,10 @@ export function roughNet(newLines, returnLines) {
 }
 
 export function shortDate(value) {
-  const d = new Date(String(value).replace(' ', 'T'));
+  // Odoo manda "YYYY-MM-DD HH:MM:SS" en UTC sin zona: se le agrega la Z.
+  const s = String(value);
+  const odoo = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(s);
+  const d = new Date(odoo ? `${s.replace(' ', 'T')}Z` : s);
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 

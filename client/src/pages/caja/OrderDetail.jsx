@@ -312,7 +312,8 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
     else if (!refundCovers(order.refund, -net)) blockers.push('Elegí cómo se devuelve: reintegro o saldo a favor');
   }
   const notesDirty = notes !== (order.notes ?? '');
-  const canAnnul = status === 'confirmado' || (['pendiente', 'error'].includes(status) && !inOdoo);
+  // Un cambio o devolución confirmado no se anula (el servidor lo rechaza).
+  const canAnnul = (status === 'confirmado' && !exchange) || (['pendiente', 'error'].includes(status) && !inOdoo);
   const canRetryInvoice = status === 'confirmado' && order.wantsInvoice && !order.invoiceName && Boolean(order.invoiceError) && locale?.invoices !== false;
 
   return (

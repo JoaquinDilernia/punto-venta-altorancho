@@ -108,6 +108,8 @@ export default function PaymentBox({
     : rowsPayload();
   const paymentBlockers = [];
   const creditConsumed = Boolean(order.creditAllocation?.length);
+  // Con el saldo ya descontado el pago no se cambia (el servidor lo rechaza).
+  const payDisabled = disabled || creditConsumed;
   const saldoWanted = mode === 'single'
     ? (single.methodId === creditMethod.id ? due : 0)
     : rows.reduce((sum, r) => { const a = parseMoney(r.amount); return r.methodId === creditMethod.id && a.ok ? sum + a.value : sum; }, 0);
@@ -203,6 +205,7 @@ export default function PaymentBox({
             <section className={styles.paySection}>
               <h3 className={styles.sectionLabel}>Medio de pago{exchange ? ` (se cobra ${formatMoney(due)})` : ''}</h3>
               {withCredit && <p className={styles.hint}>Pagar con saldo no suma descuento de efectivo</p>}
+              {creditConsumed && <Notice kind="info">El saldo ya se descontó: para cambiar el pago anulá el pedido y armalo de nuevo</Notice>}
               {mode === 'single' ? (
                 <>
                   <div className={styles.methodGrid}>
@@ -212,7 +215,7 @@ export default function PaymentBox({
                         type="button"
                         className={`${styles.method} ${single.methodId === m.id ? styles.methodOn : ''}`}
                         aria-pressed={single.methodId === m.id}
-                        disabled={disabled}
+                        disabled={payDisabled}
                         onClick={() => chooseMethod(m)}
                       >
                         {m.label}{m.discountPct > 0 && <small> −{pct(m.discountPct)}</small>}
@@ -222,13 +225,13 @@ export default function PaymentBox({
                   {needsDetail(single.methodId) && (
                     <label className="field">
                       <span className="field-label">{methodById.get(single.methodId)?.label}: elegí</span>
-                      <select className="select" value={single.detailId} disabled={disabled} onChange={(e) => chooseDetail(e.target.value)}>
+                      <select className="select" value={single.detailId} disabled={payDisabled} onChange={(e) => chooseDetail(e.target.value)}>
                         <option value="">Elegí…</option>
                         {methodById.get(single.methodId).details.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
                       </select>
                     </label>
                   )}
-                  <button type="button" className="btn btn-ghost btn-sm" disabled={disabled} onClick={startSplit}>Dividir pago</button>
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={payDisabled} onClick={startSplit}>Dividir pago</button>
                 </>
               ) : (
                 <>
@@ -236,12 +239,12 @@ export default function PaymentBox({
                   <p className={styles.hint}>El total se recalcula al aplicar: con pago dividido vale el menor descuento</p>
                   {rows.map((r, i) => (
                     <div key={i} className={styles.splitRow}>
-                      <MethodSelect methods={methods} row={r} disabled={disabled} onChange={(change) => setRow(i, change)} />
-                      <input className="input input-sm num" inputMode="decimal" aria-label="Monto" placeholder="Monto" value={r.amount} disabled={disabled} onChange={(e) => setRow(i, { amount: e.target.value })} />
+                      <MethodSelect methods={methods} row={r} disabled={payDisabled} onChange={(change) => setRow(i, change)} />
+                      <input className="input input-sm num" inputMode="decimal" aria-label="Monto" placeholder="Monto" value={r.amount} disabled={payDisabled} onChange={(e) => setRow(i, { amount: e.target.value })} />
                       {r.methodId === creditMethod.id
-                        ? <button type="button" className="btn btn-ghost btn-sm" disabled={disabled} onClick={() => fillRest(i)} title="Lo que falta, hasta el saldo disponible">Completar con saldo</button>
-                        : <button type="button" className="btn btn-ghost btn-sm" disabled={disabled} onClick={() => fillRest(i)} title="Completar con lo que falta">Resto</button>}
-                      {rows.length > 2 && <button type="button" className="btn btn-ghost btn-sm" aria-label="Quitar fila" disabled={disabled} onClick={() => setRows((prev) => prev.filter((_, idx) => idx !== i))}>×</button>}
+                        ? <button type="button" className="btn btn-ghost btn-sm" disabled={payDisabled} onClick={() => fillRest(i)} title="Lo que falta, hasta el saldo disponible">Completar con saldo</button>
+                        : <button type="button" className="btn btn-ghost btn-sm" disabled={payDisabled} onClick={() => fillRest(i)} title="Completar con lo que falta">Resto</button>}
+                      {rows.length > 2 && <button type="button" className="btn btn-ghost btn-sm" aria-label="Quitar fila" disabled={payDisabled} onClick={() => setRows((prev) => prev.filter((_, idx) => idx !== i))}>×</button>}
                     </div>
                   ))}
                   <p className={`${styles.assign} num ${rest === 0 ? styles.assignOk : styles.assignBad}`} role="status">
@@ -249,9 +252,9 @@ export default function PaymentBox({
                   </p>
                   <Notice kind="error">{splitError}</Notice>
                   <div className={styles.rowActions}>
-                    <button type="button" className="btn btn-secondary btn-sm" disabled={disabled || rows.length >= 4} onClick={() => setRows((prev) => [...prev, { methodId: '', detailId: '', amount: '' }])}>Agregar medio</button>
-                    <button type="button" className="btn btn-primary btn-sm" disabled={disabled} onClick={applySplit}>Aplicar pago dividido</button>
-                    <button type="button" className="btn btn-ghost btn-sm" disabled={disabled} onClick={endSplit}>Pago simple</button>
+                    <button type="button" className="btn btn-secondary btn-sm" disabled={payDisabled || rows.length >= 4} onClick={() => setRows((prev) => [...prev, { methodId: '', detailId: '', amount: '' }])}>Agregar medio</button>
+                    <button type="button" className="btn btn-primary btn-sm" disabled={payDisabled} onClick={applySplit}>Aplicar pago dividido</button>
+                    <button type="button" className="btn btn-ghost btn-sm" disabled={payDisabled} onClick={endSplit}>Pago simple</button>
                   </div>
                 </>
               )}
