@@ -9,6 +9,7 @@ import PaymentMethodsView from './PaymentMethodsView.jsx';
 import UsersView from './UsersView.jsx';
 import LocalesView from './LocalesView.jsx';
 import SettingsView from './SettingsView.jsx';
+import CreditsView from './CreditsView.jsx';
 
 const ITEMS = [
   { value: 'estadisticas', label: 'Estadísticas' },
@@ -17,6 +18,7 @@ const ITEMS = [
   { value: 'promociones', label: 'Promociones' },
   { value: 'medios', label: 'Medios de pago' },
   { value: 'usuarios', label: 'Usuarios' },
+  { value: 'saldos', label: 'Saldos a favor' },
   { value: 'locales', label: 'Locales' },
   { value: 'ajustes', label: 'Ajustes' },
 ];
@@ -28,6 +30,7 @@ const VIEWS = {
   promociones: PromotionsView,
   medios: PaymentMethodsView,
   usuarios: UsersView,
+  saldos: CreditsView,
   locales: LocalesView,
   ajustes: SettingsView,
 };

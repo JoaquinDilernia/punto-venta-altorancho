@@ -25,6 +25,7 @@ function Summary({ summary, config }) {
     return ids.filter((id) => summary.byMethod?.[id] != null || known.includes(id));
   }, [config, summary]);
   const methodById = new Map((config.paymentMethods ?? []).map((m) => [m.id, m]));
+  const refundIds = Object.keys(summary.refundsByMethod ?? {}).filter((id) => summary.refundsByMethod[id] > 0);
 
   return (
     <dl className={styles.summary}>
@@ -42,6 +43,10 @@ function Summary({ summary, config }) {
           </div>
         );
       })}
+      {refundIds.map((id) => (
+        <div key={`refund-${id}`}><dt>Reintegros · {methodById.get(id)?.label ?? id}</dt><dd className="num">− {formatMoney(summary.refundsByMethod[id])}</dd></div>
+      ))}
+      {refundIds.length > 0 && <div><dt>Total de reintegros</dt><dd className="num">− {formatMoney(summary.refundsTotal)}</dd></div>}
       <div className={styles.summaryTotal}>
         <dt>
           Total vendido{' '}
@@ -49,13 +54,20 @@ function Summary({ summary, config }) {
         </dt>
         <dd className="num">{formatMoney(summary.total)}</dd>
       </div>
+      {summary.creditsIssued > 0 && (
+        <div className={styles.summarySub}><dt>Saldos emitidos <span className={styles.muted}>(no es plata)</span></dt><dd className="num">{formatMoney(summary.creditsIssued)}</dd></div>
+      )}
+      {summary.creditsUsed > 0 && (
+        <div className={styles.summarySub}><dt>Saldos usados <span className={styles.muted}>(no es plata)</span></dt><dd className="num">{formatMoney(summary.creditsUsed)}</dd></div>
+      )}
+      {summary.returns > 0 && <div><dt>Devoluciones y cambios</dt><dd className="num">{summary.returns}</dd></div>}
       <div><dt>Gastos en efectivo</dt><dd className="num">− {formatMoney(summary.expenses)}</dd></div>
       <div><dt>Retiros de dinero</dt><dd className="num">− {formatMoney(summary.withdrawals)}</dd></div>
       {summary.usd?.amount > 0 && (
         <div><dt>Dólares recibidos <span className={styles.muted}>(no suman al efectivo en pesos)</span></dt><dd className="num">{usd(summary.usd.amount)} ≈ {formatMoney(summary.usd.pesos)}</dd></div>
       )}
       <div className={styles.summaryCash}>
-        <dt>Efectivo que tiene que haber <span className={styles.muted}>(fondo + ventas en efectivo − gastos − retiros)</span></dt>
+        <dt>Efectivo que tiene que haber <span className={styles.muted}>(fondo + ventas en efectivo − reintegros en efectivo − gastos − retiros)</span></dt>
         <dd className="num">{formatMoney(summary.expectedCash)}</dd>
       </div>
       {summary.countedCash != null && (

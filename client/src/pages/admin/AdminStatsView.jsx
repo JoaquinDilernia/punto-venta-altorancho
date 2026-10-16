@@ -123,8 +123,9 @@ export default function AdminStatsView() {
         <>
           <div className={styles.cards}>
             <div className={styles.stat}><span className={styles.statLabel}>Ventas</span><span className={`${styles.statValue} num`}>{stats.sales}</span></div>
-            <div className={styles.stat}><span className={styles.statLabel}>Total (con IVA)</span><span className={`${styles.statValue} num`}>{formatMoney(stats.total)}</span></div>
+            <div className={styles.stat}><span className={styles.statLabel}>Total (con IVA, neto de devoluciones)</span><span className={`${styles.statValue} num`}>{formatMoney(stats.total)}</span></div>
             <div className={styles.stat}><span className={styles.statLabel}>Total sin IVA</span><span className={`${styles.statValue} num`}>{formatMoney(stats.net)}</span></div>
+            <div className={styles.stat}><span className={styles.statLabel}>Devoluciones y cambios</span><span className={`${styles.statValue} num`}>{stats.returns ?? 0}</span></div>
             <div className={styles.stat}><span className={styles.statLabel}>Ticket promedio</span><span className={`${styles.statValue} num`}>{formatMoney(stats.averageTicket)}</span></div>
           </div>
           <div className={styles.tables}>
