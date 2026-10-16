@@ -24,7 +24,8 @@
 .qty span { min-width: 28px; text-align: center; font-weight: 600; }
 .reasons { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .reasons :global(.btn) { white-space: normal; }
-.reasonOn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.reasons .reasonOn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.reasons .reasonOn:not(:disabled):hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .total { display: flex; justify-content: space-between; font-weight: 600; font-size: var(--fs-lg); }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
 .linesList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-3); }
