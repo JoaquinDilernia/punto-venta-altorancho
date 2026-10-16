@@ -90,6 +90,49 @@ se habilite la facturación.
 | TPV | `pos.order.line.refunded_qty` (reembolsos del POS nativo) **+** devoluciones hechas por la app sobre ese remito (moves con `origin_returned_move_id` a los moves del remito del ticket) |
 | App / web | Moves `done` con `origin_returned_move_id` a los moves del OUT del pedido |
 
+## Otros hallazgos
+
+- Hay un módulo de **RMA** instalado: el asistente `stock.return.picking`
+  tiene `create_rma` / `rma_operation_id`, y existen "Recepciones de RMA"
+  (tipo 324, destino `RMA/LL` 385). No se usa en el diseño; se evita marcar
+  `create_rma`.
+- Tipos de remito TPV: LL (7) devuelve con "LL: Devoluciones" (6); **BL (312)
+  y AL (356) no tienen tipo de devolución** → el asistente usa el mismo tipo.
+  Conviene que un admin configure "Devoluciones" en BL y AL, o que la app
+  fije el `picking_type_id` de la devolución por local.
+
+## Etapa 2 — escrituras (autorizada por el dueño 2026-10-16)
+
+### Notas de crédito en borrador (hecho, borradas)
+
+- **Reversión parcial:** `account.move.reversal` con `refund_method:
+  'refund'`, `journal_id: 32` (Las Lomas) sobre `FA-B 00012-00001533`
+  (Alcorta). Resultado: NC borrador id 368705, `name '/'`, tipo **(8) NOTAS
+  DE CREDITO B** (disponibles 8 y 114), `reversed_entry_id` a la factura,
+  `ref` "Reversión de: FA-B 00012-00001533, <motivo>". El asistente acepta
+  cualquier diario de venta (`available_journal_ids`). Editando la cantidad
+  de la línea en borrador el total bajó proporcional (52.990 → 26.495,01):
+  **la NC parcial se arma revirtiendo y editando líneas antes de publicar.**
+  Borrada (`unlink`) sin consumir número.
+- Las líneas de la NC de un ticket TPV no traen `sale_line_ids` (sí en web).
+- **NC sin comprobante asociado:** `account.move` `out_refund` en diario 32,
+  partner PRUEBA POS: tipo (8) NC-B asignado solo, `reversed_entry_id`
+  vacío. No hay campo de período asociado en el modelo; lo que `l10n_ar_edi`
+  envíe a ARCA al publicar solo se puede ver publicando → **queda para la
+  punta a punta con facturación habilitada.** Borrada.
+
+### Stock (pendiente)
+
+Script listo (`w2-stock.mjs`, cliente PRUEBA POS, cada paso revertido) pero
+**bloqueado por los permisos de la sesión**; falta correrlo:
+
+A. Devolución de `LL/OUT/00260` (S10863, BCC104TR) a `LL/Exhibicion` (324)
+   con `to_refund`, y su reversión.
+B. Ingreso suelto con lote (tipo 6, Clientes → `LL/Stock`, DCE004AZ lote
+   17050), y su reversión.
+C. Transferencia interna `LL/Stock` → `RL/Stock` confirmada y reservada,
+   luego cancelada.
+
 ## Pendiente para la etapa 2 (escrituras, con autorización)
 
 1. `stock.return.picking` sobre el remito de un ticket TPV y de un OUT de
