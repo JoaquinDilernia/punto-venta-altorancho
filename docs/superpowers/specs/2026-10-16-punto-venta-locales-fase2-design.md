@@ -188,11 +188,12 @@ La ubicación de destino es `destinationId.locationId`. Si el destino tiene
 
 ### 6.2 Lo que vuelve → nota de crédito
 
-- **Original de la app con factura:** nota de crédito parcial que genera el
-  propio `sale.order` al facturar la cantidad devuelta (cantidad a facturar
-  negativa).
-- **TPV o web con factura:** nota de crédito parcial como reversión de su
-  factura (`reversed_entry_id`), solo por las líneas y cantidades devueltas.
+- **Original con factura (app, TPV o web):** nota de crédito parcial como
+  reversión de su factura (`reversed_entry_id`), solo por las líneas y
+  cantidades devueltas, en el diario del local que hace la operación (como ya
+  hace el POS nativo). No se usa la facturación desde el `sale.order`: con
+  `invoice_policy = order` la devolución no genera cantidad a facturar
+  negativa (spike Fase 2).
 - **Original sin factura:** sin nota de crédito; solo stock y registro en la
   app.
 - **Sin ticket:** nota de crédito sin comprobante asociado, con el período
@@ -290,8 +291,11 @@ en Odoo.
 
 ## 11. Spike antes del plan
 
-En el entorno de prueba, sin facturar en ARCA. Resultados en
-`docs/superpowers/spikes/`.
+No hay entorno de prueba: se hace sobre el Odoo real, sin publicar
+comprobantes (todos los diarios de local son electrónicos). Etapa 1 (solo
+lectura) hecha: `docs/superpowers/spikes/2026-10-fase2-odoo-spikes.md`.
+Etapa 2 (escrituras sobre datos de prueba, revertidas; NC solo en borrador)
+con autorización del dueño.
 
 1. Devolución de remito OUT de un `sale.order` de la app con `to_refund` y
    cantidad entregada actualizada.
