@@ -20,7 +20,8 @@ function modeOf(value) {
 // defecto todo como saldo a favor; o reintegro por un medio; o dividido.
 // `methods`: medios activos sin "saldo". `value`: refund guardado.
 // `onSave(refund)` hace el PATCH (devuelve la respuesta o null).
-export default function RefundBox({ amount, methods, value, disabled, onSave }) {
+// `onDirtyChange(pending)`: hay un reintegro elegido sin guardar.
+export default function RefundBox({ amount, methods, value, disabled, onSave, onDirtyChange }) {
   const [mode, setMode] = useState(() => modeOf(value));
   const [cashMethod, setCashMethod] = useState(() => (modeOf(value) === 'cash' ? value.cashBack[0].methodId : ''));
   const [rows, setRows] = useState(() => (modeOf(value) === 'split'
@@ -63,6 +64,10 @@ export default function RefundBox({ amount, methods, value, disabled, onSave }) 
   const exact = Math.abs(draftSum - due) < 0.01;
   const dirty = !draft || keyOf(draft) !== keyOf(value);
   const canSave = !disabled && Boolean(draft) && exact && dirty;
+  // Reintegro o división a medio armar: lo guardado no es lo que se ve.
+  const pending = mode !== 'credit' && dirty;
+  useEffect(() => { onDirtyChange?.(pending); }, [pending]); // avisa solo cuando cambia
+  useEffect(() => () => onDirtyChange?.(false), []); // al desmontar, nada pendiente
 
   async function save(refund) {
     await onSave(refund); // los errores del servidor se ven en el cobro (payError)
@@ -146,7 +151,7 @@ export default function RefundBox({ amount, methods, value, disabled, onSave }) 
         <button type="button" className="btn btn-primary btn-sm" disabled={!canSave} onClick={() => save(draft)}>Guardar reintegro</button>
       )}
       {mode === 'cash' && !cashMethod && <p className={styles.hint}>Elegí el medio para guardar el reintegro</p>}
-      {mode !== 'credit' && dirty && draft && exact && <p className={styles.hint}>Sin guardar: tocá "Guardar reintegro"</p>}
+      {pending && <p className={styles.assignBad} role="status">Sin guardar: tocá "Guardar reintegro" (o volvé a todo saldo a favor)</p>}
     </section>
   );
 }

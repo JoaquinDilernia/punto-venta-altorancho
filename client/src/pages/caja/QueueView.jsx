@@ -54,7 +54,7 @@ export default function QueueView({ queue, loaded, error, onRefresh, onOpen }) {
                   {o.status === 'error' && o.errorDetail && <span className={styles.queueErrorText}>{o.errorDetail}</span>}
                 </span>
                 <span className={`${styles.muted} num`}>{formatTime(o.sentAt ?? o.createdAt)}</span>
-                <span className={`${styles.queueAmount} num`}>{o.totals?.total != null ? formatMoney(o.totals.total) : ''}</span>
+                <span className={`${styles.queueAmount} num`}>{o.totals ? formatMoney(o.totals.net ?? o.totals.total) : ''}</span>
                 <OrderStatusChip status={o.status} />
               </button>
             </li>

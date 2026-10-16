@@ -19,7 +19,7 @@ function searchErrorText(raw) {
 }
 
 // Hoja de "Devolver": cantidad, destino, motivo y valor de la línea.
-function ReturnSheet({ line, config, locale, dialog, onConfirm, onCancel }) {
+function ReturnSheet({ line, config, locale, dialog, error, saving, onConfirm, onCancel }) {
   const manual = line.source === 'manual';
   const cap = manual ? Infinity : maxReturnable(line);
   const reasons = config?.settings?.returnReasons ?? [];
@@ -70,9 +70,10 @@ function ReturnSheet({ line, config, locale, dialog, onConfirm, onCancel }) {
         </div>
         <p className={styles.total}><span>Valor</span><span className="num">{formatMoney(qty * line.unitValue)}</span></p>
         {manual && <p className={styles.hint}>Valor: precio de lista actual</p>}
+        <Notice kind="error">{error}</Notice>
         <div className={styles.actions}>
           <button type="button" className="btn btn-secondary btn-lg" onClick={onCancel}>Cancelar</button>
-          <button type="button" className="btn btn-primary btn-lg" disabled={!ready} onClick={() => onConfirm({ qty, destinationId, reason, reasonNote: reasonNote.trim() })}>Devolver</button>
+          <button type="button" className="btn btn-primary btn-lg" disabled={!ready || saving} onClick={() => onConfirm({ qty, destinationId, reason, reasonNote: reasonNote.trim() })}>{saving ? 'Guardando…' : 'Devolver'}</button>
         </div>
       </div>
     </div>
@@ -90,13 +91,15 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
   const [error, setError] = useState('');
   const [purchase, setPurchase] = useState(null);
   const [sheetLine, setSheetLine] = useState(null);
+  const [sheetError, setSheetError] = useState('');
+  const [saving, setSaving] = useState(false);
   const seq = useRef(0);
 
   // Escape cierra primero la hoja abierta y recién después el buscador.
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
-      if (sheetLine) setSheetLine(null);
+      if (sheetLine) { setSheetLine(null); setSheetError(''); }
       else onClose();
     };
     window.addEventListener('keydown', onKey);
@@ -152,17 +155,22 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
     }
   }
 
-  // `onPick` puede devolver una promesa: si falla, el error del servidor se ve acá.
+  // `onPick` puede devolver una promesa. La hoja se cierra solo si salió bien:
+  // si el servidor rechaza, el error se ve en la hoja sin perder lo elegido.
   async function confirm(values) {
     const line = sheetLine;
-    setSheetLine(null);
-    setError('');
+    setSheetError('');
+    setSaving(true);
     try {
       await onPick({ source: line.source, purchaseId: line.purchaseId, purchaseLineId: line.purchaseLineId, productId: line.productId }, line, values);
+      setSheetLine(null);
     } catch (err) {
-      setError(err.message);
+      setSheetError(err.message);
+    } finally {
+      setSaving(false);
     }
   }
+  const closeSheet = () => { setSheetLine(null); setSheetError(''); };
 
   const back = () => { seq.current += 1; setMode('search'); setPurchase(null); setError(''); setLoading(false); };
 
@@ -245,7 +253,7 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
           </>
         )}
       </div>
-      {sheetLine && <ReturnSheet dialog={variant === "dialog"} line={sheetLine} config={config} locale={locale} onConfirm={confirm} onCancel={() => setSheetLine(null)} />}
+      {sheetLine && <ReturnSheet dialog={variant === "dialog"} line={sheetLine} config={config} locale={locale} error={sheetError} saving={saving} onConfirm={confirm} onCancel={closeSheet} />}
     </div>
   );
 }

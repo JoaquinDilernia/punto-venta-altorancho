@@ -135,6 +135,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   const [dialog, setDialog] = useState(null); // { product } | { line }
   const [annul, setAnnul] = useState(null); // null | { reason }
   const [holderReason, setHolderReason] = useState(null);
+  const [refundPending, setRefundPending] = useState(false);
   const seq = useRef(0);
   const autoInvoice = useRef(false);
 
@@ -306,7 +307,10 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
     if (!(holderReason ?? '').trim()) blockers.push('Escribí el motivo del cambio de titular');
     else if (holderDirty || !order.holderChangeReason) blockers.push('Guardá el motivo del cambio de titular');
   }
-  if (editable && net != null && net < 0 && !refundCovers(order.refund, -net)) blockers.push('Elegí cómo se devuelve: reintegro o saldo a favor');
+  if (editable && net != null && net < 0) {
+    if (refundPending) blockers.push('Guardá el reintegro (o volvé a todo saldo a favor)');
+    else if (!refundCovers(order.refund, -net)) blockers.push('Elegí cómo se devuelve: reintegro o saldo a favor');
+  }
   const notesDirty = notes !== (order.notes ?? '');
   const canAnnul = status === 'confirmado' || (['pendiente', 'error'].includes(status) && !inOdoo);
   const canRetryInvoice = status === 'confirmado' && order.wantsInvoice && !order.invoiceName && Boolean(order.invoiceError) && locale?.invoices !== false;
@@ -515,6 +519,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
               value={order.refund}
               disabled={busy || confirming}
               onSave={saveRefund}
+              onDirtyChange={setRefundPending}
             />
           )}
         </PaymentBox>

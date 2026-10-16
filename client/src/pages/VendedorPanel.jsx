@@ -10,7 +10,7 @@ import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../components/Cust
 import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../components/ShippingFields.jsx';
 import ReturnPicker from '../components/ReturnPicker.jsx';
 import ReturnLines from '../components/ReturnLines.jsx';
-import { returnBody, roughNet, holderDocsOf, holderDiffers, HOLDER_PREFIX } from '../lib/returns.js';
+import { returnBody, roughNet, holderDocsOf, holderDiffers } from '../lib/returns.js';
 import styles from './VendedorPanel.module.css';
 
 const activeLinesOf = (cart) => (cart?.lines ?? []).filter((l) => l.status !== 'eliminado');
@@ -256,8 +256,7 @@ export default function VendedorPanel() {
     cartOp(async () => {
       const body = { customer: draft.customer };
       if (hasEnvio) body.shipping = shippingBody(draft.shipping);
-      // Caja lo pasa a holderChangeReason (lo precarga desde las notas).
-      if (holderChanged) body.notes = `${HOLDER_PREFIX}${holderReason.trim()}`;
+      if (holderChanged) body.holderChangeReason = holderReason.trim();
       const order = await api(`/carts/${cart.id}/submit`, { method: 'POST', body });
       setCarts((prev) => prev.filter((c) => c.id !== cart.id));
       setActiveCartId(null);

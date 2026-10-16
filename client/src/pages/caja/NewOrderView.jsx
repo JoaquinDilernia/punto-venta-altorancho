@@ -123,13 +123,8 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
     if (errors.length) { setNotice(errors.join('. ')); return; }
     const body = { customer };
     if (hasEnvio) body.shipping = shippingBody(shipping);
-    const reason = holderChanged ? holderReason.trim() : '';
-    const order = await op(async () => {
-      const sent = await api(`/carts/${cart.id}/submit`, { method: 'POST', body });
-      // Ya está en caja: el motivo va directo al pedido. Si falla, el detalle lo vuelve a pedir.
-      if (reason) await api(`/orders/${sent.id}`, { method: 'PATCH', body: { holderChangeReason: reason } }).catch(() => {});
-      return sent;
-    });
+    if (holderChanged) body.holderChangeReason = holderReason.trim();
+    const order = await op(() => api(`/carts/${cart.id}/submit`, { method: 'POST', body }));
     if (!order) return;
     resetForm();
     onSubmitted(order.id);
