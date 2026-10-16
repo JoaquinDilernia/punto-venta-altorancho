@@ -96,10 +96,10 @@ se habilite la facturación.
   tiene `create_rma` / `rma_operation_id`, y existen "Recepciones de RMA"
   (tipo 324, destino `RMA/LL` 385). No se usa en el diseño; se evita marcar
   `create_rma`.
-- Tipos de remito TPV: LL (7) devuelve con "LL: Devoluciones" (6); **BL (312)
-  y AL (356) no tienen tipo de devolución** → el asistente usa el mismo tipo.
-  Conviene que un admin configure "Devoluciones" en BL y AL, o que la app
-  fije el `picking_type_id` de la devolución por local.
+- Tipos de remito TPV: LL (7) devuelve con "LL: Devoluciones" (6). BL y AL
+  **tienen su tipo "Devoluciones" (BL 308, AL 352)**, pero el remito TPV no lo
+  tiene configurado como tipo de devolución → el asistente usa el mismo tipo.
+  No bloquea: la app fija `returnPickingTypeId` por local (Task 1).
 
 ## Etapa 2 — escrituras (autorizada por el dueño 2026-10-16)
 
@@ -138,18 +138,26 @@ se habilite la facturación.
   Exhibición → Clientes). Stock final igual al inicial (LL/Stock 18,
   Exhibición 0).
 
-**B y C. Remitos creados a mano — BLOQUEADO por permisos.**
-`stock.picking.action_confirm` sobre un remito creado por API (ingreso suelto
-tipo 6, y transferencia interna tipo 5 LL → RL) falla: *"No puedes ingresar a
-los registros 'RMA' (rma)"* — el módulo RMA engancha la confirmación y el
-usuario de la API (uid 2798) no tiene grupo RMA. Las devoluciones por
-asistente (A) no pasan por ahí.
+**B y C. Remitos creados a mano — estaban BLOQUEADOS por permisos; re-corridos OK el 2026-10-16.**
 
-- Los dos remitos de prueba quedaron en borrador y se **borraron**; no se
-  movió stock. Sin restos: 0 remitos con origen "PRUEBA spike fase 2".
-- **Acción para un admin de Odoo:** dar al usuario de la API el grupo
-  "RMA / Usuario" (o el que corresponda). Sin eso no hay ingreso sin ticket
-  ni transferencia a Rolón. Reprobar B y C después.
+Primer intento: `stock.picking.action_confirm` sobre un remito creado por API
+(ingreso suelto tipo 6, y transferencia interna tipo 5 LL → RL) falló: *"No
+puedes ingresar a los registros 'RMA' (rma)"* — el módulo RMA engancha la
+confirmación y el usuario de la API (uid 2798) no tenía grupo RMA. Las
+devoluciones por asistente (A) no pasan por ahí. Los dos remitos de prueba
+quedaron en borrador y se **borraron**; no se movió stock.
+
+**Re-corrida 2026-10-16:** el dueño dio al usuario uid 2798 el grupo RMA y se
+repitieron las pruebas:
+
+- **B. Devolución manual sin ticket, con lote — OK.** `LL/RET/02570` (Clientes
+  → `LL/Stock`, lote 17050): stock 5 → 6, validada. Revertida con
+  `LL/RET/02571` (stock vuelve a 5).
+- **C. Transferencia interna — OK.** `LL/INT/02335` `LL/Stock` → `RL/Stock`:
+  confirmada y reservada (estado `assigned`), luego cancelada.
+
+Con el grupo RMA ya no hay bloqueo para ingreso sin ticket ni para el traslado
+a Rolón.
 
 ## Pendiente para la etapa 2 (escrituras, con autorización)
 
@@ -160,3 +168,16 @@ asistente (A) no pasan por ahí.
    cantidades editadas antes de publicar) **en borrador**: tipo de documento
    NC-A/NC-B, diario del local, `reversed_entry_id`; luego borrar el borrador.
 4. NC sin comprobante asociado en borrador: qué pide `l10n_ar` (período).
+
+## Pendientes antes de la punta a punta (Fase 2)
+
+Estado al 2026-10-16.
+
+| # | Qué | Quién | Bloquea |
+|---|---|---|---|
+| 1 | ~~Grupo "RMA / Usuario" para el usuario de la API (uid 2798)~~ **Resuelto 2026-10-16** | Admin de Odoo | ~~Ingreso sin ticket y traslado a Rolón~~ (ya no bloquea) |
+| 2 | Ubicaciones de fallas por local (o usar `RMA/Fall`) y cargarlas en Admin → Locales | Dueño + admin de Odoo | Destino "Fallas" |
+| 3 | Medio de Odoo para ventas pagadas 100 % con saldo (Ajustes) | Dueño | Ventas pagadas solo con saldo |
+| 4 | Días de validez del saldo a favor (Ajustes) | Dueño | Nada (vacío = no vence) |
+| 5 | Qué se hace con los saldos de "Cuenta de cliente" del POS nativo | Dueño | Nada (decisión pendiente) |
+| 6 | Autorización para facturar (NC reales) | Dueño | NC y su aplicación |
