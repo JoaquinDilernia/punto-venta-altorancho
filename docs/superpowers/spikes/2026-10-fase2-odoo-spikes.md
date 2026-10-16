@@ -121,17 +121,35 @@ se habilite la facturación.
   envíe a ARCA al publicar solo se puede ver publicando → **queda para la
   punta a punta con facturación habilitada.** Borrada.
 
-### Stock (pendiente)
+### Stock (corrido por el dueño desde la sesión)
 
-Script listo (`w2-stock.mjs`, cliente PRUEBA POS, cada paso revertido) pero
-**bloqueado por los permisos de la sesión**; falta correrlo:
+**A. Devolución de remito — OK.** `stock.return.picking` sobre
+`LL/OUT/00260` (S10863, BCC104TR):
 
-A. Devolución de `LL/OUT/00260` (S10863, BCC104TR) a `LL/Exhibicion` (324)
-   con `to_refund`, y su reversión.
-B. Ingreso suelto con lote (tipo 6, Clientes → `LL/Stock`, DCE004AZ lote
-   17050), y su reversión.
-C. Transferencia interna `LL/Stock` → `RL/Stock` confirmada y reservada,
-   luego cancelada.
+- En v16 `default_get` no trae líneas ni ubicación (salen de un onchange):
+  se arman a mano desde los moves `done` del remito (`product_id`,
+  `move_id`, `uom_id`, `quantity`, `to_refund`) y `location_id` explícito.
+- Resultado: `LL/RET/02566`, tipo "LL: Devoluciones" (6), Clientes →
+  **`LL/Exhibicion` (destino elegido, distinto del original)**, `sale_id`
+  S10863, move con `origin_returned_move_id` 612602, `to_refund`,
+  `sale_line_id`; `qty_delivered` de la línea bajó a 0. Quant
+  `LL/Exhibicion` +1.
+- Revertida con la devolución de la devolución (`LL/RET/02567`,
+  Exhibición → Clientes). Stock final igual al inicial (LL/Stock 18,
+  Exhibición 0).
+
+**B y C. Remitos creados a mano — BLOQUEADO por permisos.**
+`stock.picking.action_confirm` sobre un remito creado por API (ingreso suelto
+tipo 6, y transferencia interna tipo 5 LL → RL) falla: *"No puedes ingresar a
+los registros 'RMA' (rma)"* — el módulo RMA engancha la confirmación y el
+usuario de la API (uid 2798) no tiene grupo RMA. Las devoluciones por
+asistente (A) no pasan por ahí.
+
+- Los dos remitos de prueba quedaron en borrador y se **borraron**; no se
+  movió stock. Sin restos: 0 remitos con origen "PRUEBA spike fase 2".
+- **Acción para un admin de Odoo:** dar al usuario de la API el grupo
+  "RMA / Usuario" (o el que corresponda). Sin eso no hay ingreso sin ticket
+  ni transferencia a Rolón. Reprobar B y C después.
 
 ## Pendiente para la etapa 2 (escrituras, con autorización)
 
