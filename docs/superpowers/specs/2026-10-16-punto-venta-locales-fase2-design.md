@@ -196,8 +196,9 @@ La ubicación de destino es `destinationId.locationId`. Si el destino tiene
   negativa (spike Fase 2).
 - **Original sin factura:** sin nota de crédito; solo stock y registro en la
   app.
-- **Sin ticket:** nota de crédito sin comprobante asociado, con el período
-  como referencia (lo que exige ARCA en ese caso).
+- **Sin ticket:** sin nota de crédito, solo stock y registro en la app (como
+  el POS nativo). ARCA exige comprobante o período asociado (error 10197) y el
+  Odoo no manda el período (punta a punta 2026-10-26).
 
 ### 6.3 Lo nuevo
 

@@ -1,14 +1,15 @@
 # Reunión punto de venta — pendientes (2026-10-26)
 
 Anotado tal cual salió de la reunión, para tenerlo mapeado. Falta definir
-alcance y prioridad de cada punto. Prioridad inmediata: **cambios y
-devoluciones** (Fase 2, rama `feature/pos-fase2`), que todavía no está en
-producción.
+alcance y prioridad de cada punto.
 
 ## Cambios y devoluciones
 
-- [ ] Cambios y devoluciones de compras **web y de locales** (no solo locales).
-      Ver con Mili y Luji cómo lo hacen hoy.
+- [x] En los locales, de compras de la app, del POS de Odoo, de Tiendanube o
+      sin ticket: en producción desde el 2026-10-26 (Fase 2).
+- [ ] Cambios y devoluciones gestionados por el equipo **web** (no en un
+      local). Ver con Mili y Luji cómo lo hacen hoy.
+- [ ] Confirmar con el contador: devolución sin ticket sin nota de crédito.
 
 ## Stock y entregas
 
