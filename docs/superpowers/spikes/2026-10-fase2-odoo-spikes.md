@@ -171,13 +171,13 @@ a Rolón.
 
 ## Pendientes antes de la punta a punta (Fase 2)
 
-Estado al 2026-10-16.
+Estado al 2026-10-26.
 
 | # | Qué | Quién | Bloquea |
 |---|---|---|---|
 | 1 | ~~Grupo "RMA / Usuario" para el usuario de la API (uid 2798)~~ **Resuelto 2026-10-16** | Admin de Odoo | ~~Ingreso sin ticket y traslado a Rolón~~ (ya no bloquea) |
-| 2 | Ubicaciones de fallas por local (o usar `RMA/Fall`) y cargarlas en Admin → Locales | Dueño + admin de Odoo | Destino "Fallas" |
-| 3 | Medio de Odoo para ventas pagadas 100 % con saldo (Ajustes) | Dueño | Ventas pagadas solo con saldo |
-| 4 | Días de validez del saldo a favor (Ajustes) | Dueño | Nada (vacío = no vence) |
+| 2 | ~~Ubicaciones de fallas por local~~ **Resuelto 2026-10-26:** lo que vuelve con falla va a "Enviar a Rolón"; el traslado sale con motivo "Fallas" | Dueño | — |
+| 3 | ~~Medio de Odoo para ventas pagadas 100 % con saldo~~ **Resuelto 2026-10-26:** "Efectivo" (cargado en Ajustes) | Dueño | — |
+| 4 | ~~Días de validez del saldo a favor~~ **Resuelto 2026-10-26:** no vence (vacío) | Dueño | — |
 | 5 | Qué se hace con los saldos de "Cuenta de cliente" del POS nativo | Dueño | Nada (decisión pendiente) |
-| 6 | Autorización para facturar (NC reales) | Dueño | NC y su aplicación |
+| 6 | ~~Autorización para facturar (NC reales)~~ **Autorizado 2026-10-26** para la punta a punta | Dueño | — |
