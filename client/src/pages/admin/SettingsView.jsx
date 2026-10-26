@@ -20,6 +20,10 @@ function toForm(s) {
     decoradorTagId: s.decoradorTagId ?? null,
     homeServiceSku: s.homeServiceSku ?? 'SERVIDOM',
     homeServiceDefaultAmount: String(s.homeServiceDefaultAmount ?? 5000).replace('.', ','),
+    creditValidityDays: s.creditValidityDays == null ? '' : String(s.creditValidityDays),
+    returnReasons: (s.returnReasons ?? []).join('\n'),
+    returnSearchDays: String(s.returnSearchDays ?? 90),
+    creditOdooPaymentName: s.creditOdooPaymentName ?? '',
   };
 }
 
@@ -46,6 +50,25 @@ export default function SettingsView() {
       setError('El monto de la subida al domicilio es inválido');
       return;
     }
+    const validity = form.creditValidityDays.trim();
+    const validityDays = validity === '' ? null : Number(validity);
+    if (validityDays !== null && !(Number.isInteger(validityDays) && validityDays >= 1 && validityDays <= 3650)) {
+      setSaving(false);
+      setError('Los días de validez del saldo tienen que ser un número entero entre 1 y 3650 (o vacío si no vence)');
+      return;
+    }
+    const reasons = form.returnReasons.split('\n').map((r) => r.trim()).filter(Boolean);
+    if (reasons.length < 1 || reasons.length > 20 || reasons.some((r) => r.length > 60)) {
+      setSaving(false);
+      setError('Los motivos de devolución son entre 1 y 20, de hasta 60 letras cada uno');
+      return;
+    }
+    const searchDays = Number(form.returnSearchDays.trim());
+    if (!(Number.isInteger(searchDays) && searchDays >= 1 && searchDays <= 1095)) {
+      setSaving(false);
+      setError('Los días hacia atrás para buscar compras tienen que ser un número entero entre 1 y 1095');
+      return;
+    }
     try {
       // Se manda el documento entero: el backend lo reemplaza.
       const result = await api('/admin/settings', {
@@ -60,6 +83,10 @@ export default function SettingsView() {
           decoradorTagId: form.decoradorTagId,
           homeServiceSku: form.homeServiceSku.trim(),
           homeServiceDefaultAmount: homeAmount.value,
+          creditValidityDays: validityDays,
+          returnReasons: reasons,
+          returnSearchDays: searchDays,
+          creditOdooPaymentName: form.creditOdooPaymentName.trim() || null,
         },
       });
       setForm(toForm(result));
@@ -113,6 +140,28 @@ export default function SettingsView() {
               <input className="input num" inputMode="decimal" value={form.homeServiceDefaultAmount} onChange={(e) => set('homeServiceDefaultAmount')(e.target.value)} />
             </label>
             <OdooSelect label="Etiqueta de decorador" options={opts.tags} value={form.decoradorTagId} onChange={set('decoradorTagId')} empty="Sin etiqueta" />
+          </div>
+
+          <h2 className={styles.cardTitle}>Devoluciones y saldo a favor</h2>
+          <div className={styles.grid2}>
+            <label className="field">
+              <span className="field-label">Días de validez del saldo a favor</span>
+              <input className="input num" inputMode="numeric" value={form.creditValidityDays} onChange={(e) => set('creditValidityDays')(e.target.value)} />
+              <span className={styles.hint}>Vacío = el saldo no vence.</span>
+            </label>
+            <label className="field">
+              <span className="field-label">Días hacia atrás para buscar compras *</span>
+              <input className="input num" inputMode="numeric" value={form.returnSearchDays} onChange={(e) => set('returnSearchDays')(e.target.value)} />
+            </label>
+            <label className={`field ${styles.span2}`}>
+              <span className="field-label">Motivos de devolución (uno por línea) *</span>
+              <textarea className="input" rows={6} value={form.returnReasons} onChange={(e) => set('returnReasons')(e.target.value)} />
+            </label>
+            <label className={`field ${styles.span2}`}>
+              <span className="field-label">Medio de Odoo si se paga todo con saldo</span>
+              <input className="input" value={form.creditOdooPaymentName} onChange={(e) => set('creditOdooPaymentName')(e.target.value)} />
+              <span className={styles.hint}>El nombre exacto del medio de pago (payment.method) en Odoo.</span>
+            </label>
           </div>
 
           <div><button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando…' : 'Guardar ajustes'}</button></div>

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { formatMoney } from '../../lib/labels.js';
 import { formatTime } from '../../lib/format.js';
 import { EmptyState, Notice, OrderStatusChip } from '../../components/ui.jsx';
-import { activeLinesOf } from './lineParts.jsx';
+import { KindTag, activeLinesOf } from './lineParts.jsx';
 import styles from './caja.module.css';
 
 // Cola de pedidos que mandaron los vendedores. La lista y su refresco (cada
@@ -38,17 +38,23 @@ export default function QueueView({ queue, loaded, error, onRefresh, onOpen }) {
       <ul className={styles.queue}>
         {visible.map((o) => {
           const count = activeLinesOf(o).reduce((sum, l) => sum + l.qty, 0);
+          const back = (o.returnLines ?? []).reduce((sum, l) => sum + l.qty, 0);
           return (
             <li key={o.id}>
               <button type="button" className={`${styles.queueItem} ${o.status === 'error' ? styles.queueError : ''}`} onClick={() => onOpen(o.id)}>
-                <span className={`${styles.queueNumber} num`}>{o.number}</span>
+                <span className={styles.numberCell}>
+                  <span className={`${styles.queueNumber} num`}>{o.number}</span>
+                  <KindTag kind={o.kind} />
+                </span>
                 <span className={styles.queueMain}>
                   <strong>{o.customer?.name ?? 'Sin cliente'}</strong>
-                  <span className={styles.muted}>{o.sellerName} · {count} {count === 1 ? 'producto' : 'productos'}</span>
+                  <span className={styles.muted}>
+                    {o.sellerName} · {count} {count === 1 ? 'producto' : 'productos'}{back > 0 ? ` · vuelve${back === 1 ? '' : 'n'} ${back}` : ''}
+                  </span>
                   {o.status === 'error' && o.errorDetail && <span className={styles.queueErrorText}>{o.errorDetail}</span>}
                 </span>
                 <span className={`${styles.muted} num`}>{formatTime(o.sentAt ?? o.createdAt)}</span>
-                <span className={`${styles.queueAmount} num`}>{o.totals?.total != null ? formatMoney(o.totals.total) : ''}</span>
+                <span className={`${styles.queueAmount} num`}>{o.totals ? formatMoney(o.totals.net ?? o.totals.total) : ''}</span>
                 <OrderStatusChip status={o.status} />
               </button>
             </li>

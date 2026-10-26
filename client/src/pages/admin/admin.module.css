@@ -42,7 +42,7 @@
 .detailRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: var(--s-2); align-items: end; }
 
 /* Estadísticas */
-.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s-3); }
 .stat { display: flex; flex-direction: column; gap: 2px; padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); }
 .statLabel { font-size: var(--fs-sm); color: var(--ink-2); }
 .statValue { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; }
@@ -57,3 +57,10 @@
 .kv { display: flex; flex-direction: column; }
 .kv > div { display: flex; justify-content: space-between; gap: var(--s-4); padding: 4px 0; border-bottom: 1px solid var(--line); }
 .voided { color: var(--ink-3); text-decoration: line-through; }
+
+/* Destinos de devolución y saldos */
+.destBox { display: flex; flex-direction: column; gap: var(--s-2); margin: 0; padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--wash); min-inline-size: 0; }
+.destFlags { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-4); }
+.creditDetail { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3) var(--s-4); background: var(--wash); }
+.creditMoves { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.creditMoves li { display: flex; justify-content: space-between; gap: var(--s-4); padding: 6px 0; border-bottom: 1px solid var(--line); }

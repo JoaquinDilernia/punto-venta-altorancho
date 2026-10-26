@@ -141,3 +141,16 @@
 .voided { color: var(--ink-3); }
 .voided .movementText, .voided .num { text-decoration: line-through; }
 .confirmBox { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); border: 1.5px solid var(--removed); border-radius: var(--r-md); background: var(--removed-bg); }
+
+/* ---- Cambios y devoluciones ---- */
+.block { display: flex; flex-direction: column; gap: var(--s-2); }
+.blockTitle { font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.kindTag { display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 6px; background: var(--wash-2); color: var(--ink-2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.kindTagReturn { background: var(--sent-bg); color: var(--sent); }
+.numberCell { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.receipt { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-md); background: var(--done-bg); color: var(--done); }
+.receipt h3 { font-size: var(--fs-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.receiptBlock { display: flex; flex-direction: column; gap: 2px; color: var(--ink); }
+.receiptBlock ul { display: flex; flex-direction: column; gap: 2px; }
+.receiptRow { display: flex; justify-content: space-between; gap: var(--s-3); }
+.pendingTag { color: var(--pending); font-weight: 600; }

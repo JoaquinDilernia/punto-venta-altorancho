@@ -4,6 +4,9 @@ import { formatMoney, ORDER_STATUS } from '../../lib/labels.js';
 import { formatDateTime, monthOptions, toMs } from '../../lib/format.js';
 import { EmptyState, Notice, OrderStatusChip } from '../../components/ui.jsx';
 import { useApiData } from './adminParts.jsx';
+import { KindTag } from '../caja/lineParts.jsx';
+import { KIND_LABELS } from '../../lib/returns.js';
+import cajaStyles from '../caja/caja.module.css';
 import styles from './admin.module.css';
 
 const STATUS_FILTERS = [
@@ -12,6 +15,13 @@ const STATUS_FILTERS = [
   { value: 'confirmado', label: 'Confirmados' },
   { value: 'error', label: 'Con error' },
   { value: 'anulado', label: 'Anulados' },
+];
+
+const KIND_FILTERS = [
+  { value: 'todas', label: 'Todas' },
+  { value: 'venta', label: 'Ventas' },
+  { value: 'cambio', label: 'Cambios' },
+  { value: 'devolucion', label: 'Devoluciones' },
 ];
 
 const fullDate = new Intl.DateTimeFormat('es-AR', {
@@ -37,6 +47,7 @@ export default function AdminHistoryView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('todos');
+  const [kind, setKind] = useState('todas');
   const [search, setSearch] = useState('');
   const seq = useRef(0);
 
@@ -66,6 +77,7 @@ export default function AdminHistoryView() {
     const q = search.trim().toLowerCase();
     return orders
       .filter((o) => status === 'todos' || o.status === status)
+      .filter((o) => kind === 'todas' || (o.kind ?? 'venta') === kind)
       .filter((o) => !q
         || (o.number ?? '').toLowerCase().includes(q)
         || (o.odooOrderName ?? '').toLowerCase().includes(q)
@@ -74,15 +86,15 @@ export default function AdminHistoryView() {
         || (o.customer?.name ?? '').toLowerCase().includes(q)
         || (o.customer?.docNumber ?? '').includes(q))
       .sort((a, b) => (saleMs(b) ?? 0) - (saleMs(a) ?? 0));
-  }, [orders, status, search]);
+  }, [orders, status, kind, search]);
 
   function exportCsv() {
-    const header = ['Número', 'Fecha', 'Local', 'Vendedor', 'Cliente', 'Documento', 'Total', 'Medio de pago', 'Detalle', 'Pedido Odoo', 'Factura', 'Estado'];
+    const header = ['Número', 'Tipo', 'Fecha', 'Local', 'Vendedor', 'Cliente', 'Documento', 'Total', 'Medio de pago', 'Detalle', 'Pedido Odoo', 'Factura', 'Estado'];
     const rows = visible.map((o) => {
       const ms = saleMs(o);
       const detail = (o.lines ?? []).filter((l) => l.status !== 'eliminado').map((l) => `${l.qty} x ${l.name}`).join(' | ');
       return [
-        o.number, ms == null ? '' : fullDate.format(ms), localName(o.localId), o.sellerName, o.customer?.name, o.customer?.docNumber,
+        o.number, KIND_LABELS[o.kind ?? 'venta'] ?? o.kind, ms == null ? '' : fullDate.format(ms), localName(o.localId), o.sellerName, o.customer?.name, o.customer?.docNumber,
         o.totals?.total != null ? String(o.totals.total).replace('.', ',') : '', paymentText(o), detail, o.odooOrderName, o.invoiceName,
         ORDER_STATUS[o.status]?.label ?? o.status,
       ];
@@ -110,6 +122,12 @@ export default function AdminHistoryView() {
           <select className="select" aria-label="Mes" value={month} onChange={(e) => setMonth(e.target.value)}>
             {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
+          <label className={styles.toolbar}>
+            <span className={styles.muted}>Tipo</span>
+            <select className="select" aria-label="Tipo de operación" value={kind} onChange={(e) => setKind(e.target.value)}>
+              {KIND_FILTERS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+            </select>
+          </label>
           <input className={`input ${styles.searchInput}`} type="search" placeholder="Número, cliente, vendedor, S0… o factura" aria-label="Buscar venta" value={search} onChange={(e) => setSearch(e.target.value)} />
           <button type="button" className="btn btn-secondary" onClick={load}>Actualizar</button>
           <button type="button" className="btn btn-primary" onClick={exportCsv} disabled={visible.length === 0}>Exportar CSV</button>
@@ -138,7 +156,7 @@ export default function AdminHistoryView() {
             <tbody>
               {visible.map((o) => (
                 <tr key={o.id}>
-                  <td className="num"><strong>{o.number}</strong></td>
+                  <td className="num"><span className={cajaStyles.numberCell}><strong>{o.number}</strong><KindTag kind={o.kind} /></span></td>
                   <td className="num">{formatDateTime(o.confirmedAt ?? o.sentAt ?? o.createdAt)}</td>
                   <td>{localName(o.localId)}</td>
                   <td>{o.sellerName}</td>

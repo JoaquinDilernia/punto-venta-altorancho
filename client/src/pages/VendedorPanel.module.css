@@ -59,3 +59,8 @@
 @media (min-width: 901px) {
   .who { display: none; }
 }
+
+/* Cambio: bloques "Vuelve" y "Se lleva". */
+.block { display: flex; flex-direction: column; gap: var(--s-2); }
+.blockTitle { font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.blockHint { font-size: var(--fs-sm); color: var(--ink-3); }

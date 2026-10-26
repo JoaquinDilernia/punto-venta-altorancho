@@ -90,7 +90,7 @@ export default function CajaPanel() {
   const localName = locales.find((l) => l.id === localId)?.name;
   const items = [
     { value: 'pedidos', label: 'Pedidos', badge: queue.length },
-    { value: 'nuevo', label: 'Nuevo pedido' },
+    { value: 'nuevo', label: 'Nueva operación' },
     { value: 'caja', label: 'Caja del día' },
     { value: 'historial', label: 'Historial' },
     { value: 'productos', label: 'Productos' },

@@ -8,6 +8,9 @@ import StockBadges from '../components/StockBadges.jsx';
 import LineEditor, { availableFor, defaultLineValue } from '../components/LineEditor.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../components/CustomerForm.jsx';
 import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../components/ShippingFields.jsx';
+import ReturnPicker from '../components/ReturnPicker.jsx';
+import ReturnLines from '../components/ReturnLines.jsx';
+import { returnBody, roughNet, holderDocsOf, holderDiffers } from '../lib/returns.js';
 import styles from './VendedorPanel.module.css';
 
 const activeLinesOf = (cart) => (cart?.lines ?? []).filter((l) => l.status !== 'eliminado');
@@ -108,6 +111,7 @@ export default function VendedorPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [picker, setPicker] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -134,7 +138,17 @@ export default function VendedorPanel() {
   const lines = activeLinesOf(cart);
   const total = lines.reduce((sum, l) => sum + l.basePrice * l.qty, 0);
   const hasEnvio = lines.some((l) => l.delivery === 'envio');
+  const returnLines = cart?.returnLines ?? [];
+  const exchange = returnLines.length > 0;
+  const net = roughNet(lines, returnLines);
   const draft = (cart && drafts[cart.id]) || { customer: EMPTY_CUSTOMER, shipping: EMPTY_SHIPPING };
+  const holderDoc = holderDocsOf(returnLines)[0] ?? '';
+  const holderChanged = holderDiffers(returnLines, draft.customer.docNumber);
+  const holderReason = draft.holderReason ?? '';
+  const setHolderReason = (id) => (text) => setDrafts((prev) => {
+    const cur = prev[id] ?? { customer: EMPTY_CUSTOMER, shipping: EMPTY_SHIPPING };
+    return { ...prev, [id]: { ...cur, holderReason: text } };
+  });
   // Actualización funcional: lo que se escribe mientras una búsqueda está en vuelo no se pierde.
   // `change` es un objeto de campos o una función (último valor) -> campos.
   const draftUpdater = (id, key) => (change) => setDrafts((prev) => {
@@ -187,6 +201,34 @@ export default function VendedorPanel() {
     setSheet(null);
   }
 
+  // Lo que vuelve: la primera línea crea el carrito; las demás se suman al activo.
+  // Si falla, tira: el error se ve dentro del buscador de compras.
+  async function pickReturn(purchase, purchaseLine, values) {
+    const body = returnBody(purchase, purchaseLine, values);
+    setBusy(true);
+    try {
+      const order = cart
+        ? await api(`/orders/${cart.id}/return-lines`, { method: 'POST', body })
+        : await api('/returns/carts', { method: 'POST', body });
+      putCart(order);
+      setActiveCartId(order.id);
+      setSent('');
+      setNotice({ kind: 'error', text: '' });
+      setConfirmDiscard(false);
+      setPicker(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const editReturn = (rl, changes) => cartOp(async () => {
+    putCart(await api(`/orders/${cart.id}/return-lines/${rl.rlId}`, { method: 'PATCH', body: changes }));
+  });
+
+  const removeReturn = (rl) => cartOp(async () => {
+    putCart(await api(`/orders/${cart.id}/return-lines/${rl.rlId}`, { method: 'DELETE' }));
+  });
+
   const changeQty = (line, qty) => cartOp(async () => {
     putCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, { method: 'PATCH', body: { qty } }));
   });
@@ -205,6 +247,7 @@ export default function VendedorPanel() {
   function submit() {
     const errors = [...customerErrors(draft.customer)];
     if (hasEnvio) errors.push(...shippingErrors(draft.shipping));
+    if (holderChanged && !holderReason.trim()) errors.push('Escribí el motivo del cambio de titular');
     if (errors.length) {
       setNotice({ kind: 'error', text: errors.join('. ') });
       return;
@@ -213,6 +256,7 @@ export default function VendedorPanel() {
     cartOp(async () => {
       const body = { customer: draft.customer };
       if (hasEnvio) body.shipping = shippingBody(draft.shipping);
+      if (holderChanged) body.holderChangeReason = holderReason.trim();
       const order = await api(`/carts/${cart.id}/submit`, { method: 'POST', body });
       setCarts((prev) => prev.filter((c) => c.id !== cart.id));
       setActiveCartId(null);
@@ -227,7 +271,9 @@ export default function VendedorPanel() {
     setNotice({ kind: 'error', text: '' });
   }
 
-  const localLabel = locales.find((l) => l.id === user?.localId)?.name;
+  const ownLocale = locales.find((l) => l.id === user?.localId);
+  const localLabel = ownLocale?.name;
+  const closePicker = useCallback(() => setPicker(false), []);
 
   return (
     <div className={styles.page}>
@@ -250,6 +296,9 @@ export default function VendedorPanel() {
           </nav>
         )}
         {cart && <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectCart(null)}>Nuevo cliente</button>}
+        {config && (
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => setPicker(true)}>Cambio / devolución</button>
+        )}
       </div>
 
       <main className={styles.main}>
@@ -262,15 +311,25 @@ export default function VendedorPanel() {
           {sent && <div className={styles.sent} role="status">{sent}</div>}
           <Notice kind={notice.kind} onClose={notice.text ? () => setNotice({ kind: 'error', text: '' }) : undefined}>{notice.text}</Notice>
 
-          {!cart && !sent && <EmptyState title="Carrito vacío">Buscá un producto y tocá Agregar.</EmptyState>}
+          {!cart && !sent && <EmptyState title="Carrito vacío">Buscá un producto y tocá Agregar, o tocá Cambio / devolución.</EmptyState>}
 
           {cart && (
             <>
-              <ul className={styles.lines}>
-                {lines.map((l) => (
-                  <CartLine key={l.lineId} line={l} localName={localName} busy={busy} onlyLine={lines.length <= 1} onQty={changeQty} onEdit={(line) => setSheet({ line })} onRemove={removeLine} />
-                ))}
-              </ul>
+              {exchange && (
+                <section className={styles.block} aria-label="Vuelve">
+                  <h3 className={styles.blockTitle}>Vuelve</h3>
+                  <ReturnLines lines={returnLines} destinations={ownLocale?.returnDestinations ?? []} busy={busy} onEdit={editReturn} onRemove={removeReturn} />
+                </section>
+              )}
+              <section className={styles.block} aria-label="Se lleva">
+                {exchange && <h3 className={styles.blockTitle}>Se lleva</h3>}
+                {exchange && lines.length === 0 && <p className={styles.blockHint}>Opcional: si se lleva algo, buscalo y tocá Agregar.</p>}
+                <ul className={styles.lines}>
+                  {lines.map((l) => (
+                    <CartLine key={l.lineId} line={l} localName={localName} busy={busy} onlyLine={lines.length <= 1 && !exchange} onQty={changeQty} onEdit={(line) => setSheet({ line })} onRemove={removeLine} />
+                  ))}
+                </ul>
+              </section>
 
               {hasEnvio && <ShippingFields value={draft.shipping} onChange={draftUpdater(cart.id, 'shipping')} defaultHomeAmount={config?.settings?.homeServiceDefaultAmount} />}
               <CustomerForm
@@ -278,6 +337,21 @@ export default function VendedorPanel() {
                 value={draft.customer}
                 onChange={draftUpdater(cart.id, 'customer')}
                 decoradorTagId={config?.settings?.decoradorTagId}
+                prefillDoc={holderDoc}
+                showCredit
+                afterDoc={holderChanged && (
+                  <label className="field">
+                    <span className="field-label">Motivo del cambio de titular (obligatorio)</span>
+                    <input
+                      className="input"
+                      autoComplete="off"
+                      maxLength={180}
+                      placeholder="La compra está a nombre de otra persona"
+                      value={holderReason}
+                      onChange={(e) => setHolderReason(cart.id)(e.target.value)}
+                    />
+                  </label>
+                )}
               />
 
               {confirmDiscard ? (
@@ -297,11 +371,19 @@ export default function VendedorPanel() {
       </main>
 
       <footer className={styles.bar}>
-        <div>
-          <p className={styles.barLabel}>Total productos</p>
-          <p className={`${styles.barTotal} num`}>{formatMoney(total)}</p>
-        </div>
-        <button type="button" className="btn btn-primary btn-lg" disabled={busy || !cart || lines.length === 0} onClick={submit}>
+        {exchange ? (
+          <div>
+            <p className={styles.barLabel}>{net >= 0 ? 'Paga' : 'A favor del cliente'}</p>
+            <p className={`${styles.barTotal} num`}>{formatMoney(Math.abs(net))}</p>
+            <p className={styles.barLabel}>Aproximado: caja aplica los descuentos</p>
+          </div>
+        ) : (
+          <div>
+            <p className={styles.barLabel}>Total productos</p>
+            <p className={`${styles.barTotal} num`}>{formatMoney(total)}</p>
+          </div>
+        )}
+        <button type="button" className="btn btn-primary btn-lg" disabled={busy || !cart || (lines.length === 0 && !exchange)} onClick={submit}>
           {submitting ? 'Enviando…' : 'Enviar a caja'}
         </button>
       </footer>
@@ -316,6 +398,9 @@ export default function VendedorPanel() {
           onConfirm={(v) => (sheet.product ? addLine(sheet.product, v) : editLine(sheet.line, v))}
           onClose={() => setSheet(null)}
         />
+      )}
+      {picker && (
+        <ReturnPicker config={config} localId={user?.localId} busy={busy} onPick={pickReturn} onClose={closePicker} variant="sheet" />
       )}
     </div>
   );

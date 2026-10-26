@@ -3,6 +3,7 @@ import { DELIVERY_LABELS, ORIGIN_LABELS, formatMoney } from '../../lib/labels.js
 import { Chip, Notice } from '../../components/ui.jsx';
 import StockBadges from '../../components/StockBadges.jsx';
 import LineEditor, { availableFor, defaultLineValue } from '../../components/LineEditor.jsx';
+import { KIND_LABELS } from '../../lib/returns.js';
 import styles from './caja.module.css';
 
 export const activeLinesOf = (order) => (order?.lines ?? []).filter((l) => l.status !== 'eliminado');
@@ -98,4 +99,10 @@ export function LineRow({ line, localName, busy, onlyLine, readOnly, onQty, onEd
       )}
     </li>
   );
+}
+
+// Etiqueta del tipo de operación (texto, no solo color).
+export function KindTag({ kind }) {
+  const k = kind ?? 'venta';
+  return <span className={`${styles.kindTag} ${k !== 'venta' ? styles.kindTagReturn : ''}`}>{KIND_LABELS[k] ?? k}</span>;
 }
