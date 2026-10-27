@@ -3,7 +3,7 @@
 Anotado tal cual salió de la reunión, en el orden en que se anotó. Falta
 definir alcance y prioridad de cada punto; los vamos detallando de a uno.
 
-- [ ] **Stock web pasando por Rolón**: vender en locales con stock web; por
+- [x] **Stock web pasando por Rolón**: vender en locales con stock web; por
       detrás ese stock tiene que pasar de stock web a stock Rolón.
       **Definido (2026-10-27):**
       - Web (`EC/Stock` 150) está físicamente dentro de Rolón; el local nunca
@@ -16,6 +16,10 @@ definir alcance y prioridad de cada punto; los vamos detallando de a uno.
       - Si la transferencia falla, no se confirma nada y caja ve el error.
       - Stock "infinito" en web: sin tope por ahora (serían productos que no
         están a la venta).
+      **Hecho (2026-10-27):** backend f5f83f3 + a04a0e5, front 8bf4c19. El traslado
+      lleva motivo "Reasignación de stock para venta desde local" y "Sin bultos"
+      (Odoo los exige). Probado contra Odoo real: EC/INT/04910 (revertido con
+      RL/INT/06845).
 - [ ] **Retiro en otro local** donde haya disponible.
       **Definido (2026-10-27):**
       - Se vende en un local (ej. San Isidro) con stock de otro local
@@ -71,7 +75,7 @@ definir alcance y prioridad de cada punto; los vamos detallando de a uno.
 - [x] **Descuentos sobre total / subtotal.** Ya está (Fase 1, `posPricing.mjs`):
       medio de pago sobre el total de productos → subtotal; descuento extra o
       cupón sobre el subtotal; envío al final sin descuento.
-- [ ] **Recibo automático** (no ticket de cambio) e impresión automática en la
+- [x] **Recibo automático** (no ticket de cambio) e impresión automática en la
       impresora SP58.
       **Relevado (2026-10-27):** impresora térmica X-Printer XP-58IIH (58 mm,
       USB). Hoy el ticket de cambio sale de Odoo y lo descargan e imprimen a
@@ -90,6 +94,8 @@ definir alcance y prioridad de cada punto; los vamos detallando de a uno.
         sucursales" y "La validez del cambio es efectiva hasta 30 dias después
         de la fecha de compra"; pie www.altorancho.com · 11-3144-0631. Sin
         precios.
+      **Hecho (2026-10-27):** front f6fdd47. Falta probar en una caja con la XP-58IIH
+      y armar el acceso directo con `--kiosk-printing`.
 - [ ] **Caja en dólares**: se puede pagar en USD.
       **Definido (2026-10-27):**
       - Medio de pago "Dólares" separado; combinable con otros (pago dividido).
