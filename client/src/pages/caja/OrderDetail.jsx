@@ -363,6 +363,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
               ? <>Factura <strong>{order.invoiceName}</strong></>
               : order.wantsInvoice ? 'Con factura: todavía sin emitir' : 'Sin factura'}
           </p>
+          {order.webTransfer && <p className={styles.resultLine}>Traslado web → Rolón <strong className="num">{order.webTransfer.name}</strong></p>}
           {order.invoiceError && <p className={styles.resultError}>No se pudo facturar: {order.invoiceError}</p>}
           {order.warning && <p className={styles.resultWarning} role="alert">{order.warning}</p>}
         </section>

@@ -2,7 +2,7 @@ export const DELIVERY_LABELS = {
   ahora: 'Se lo lleva ahora', retira_local: 'Retira otro día en el local', envio: 'Envío a domicilio',
   retira_rolon: 'Retira en Rolón', retira_otro_local: 'Retira en otro local',
 };
-export const ORIGIN_LABELS = { stock: 'Stock del local', exhibicion: 'Exhibición', rolon: 'Rolón' };
+export const ORIGIN_LABELS = { stock: 'Stock del local', exhibicion: 'Exhibición', rolon: 'Rolón', web: 'Web' };
 export const ORDER_STATUS = {
   carrito: { label: 'Carrito', tone: 'neutral' }, pendiente: { label: 'En caja', tone: 'pending' },
   error: { label: 'Con error', tone: 'removed' }, confirmado: { label: 'Confirmado', tone: 'done' },

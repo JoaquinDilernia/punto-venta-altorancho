@@ -1,27 +1,31 @@
 import { DELIVERY_LABELS, ORIGIN_LABELS } from '../lib/labels.js';
 import styles from './LineEditor.module.css';
 
-const ORIGINS = ['stock', 'exhibicion', 'rolon'];
+const ORIGINS = ['stock', 'exhibicion', 'rolon', 'web'];
+// Web está dentro de Rolón: al confirmar se traslada y sale como Rolón.
+const fromRolon = (origin) => origin === 'rolon' || origin === 'web';
 const DELIVERIES = ['ahora', 'retira_local', 'envio', 'retira_rolon', 'retira_otro_local'];
 
 export const deliveryAllowed = (delivery, origin) => {
-  if (delivery === 'ahora') return origin !== 'rolon';
-  if (delivery === 'retira_rolon' || delivery === 'retira_otro_local') return origin === 'rolon';
+  if (delivery === 'ahora') return !fromRolon(origin);
+  if (delivery === 'retira_rolon' || delivery === 'retira_otro_local') return fromRolon(origin);
   return true;
 };
 
-// Disponible por origen según el stock del producto (null = no se conoce).
+// Disponible por origen según el stock del producto (null = no se conoce;
+// Infinity = web con stock "sin límite").
 export function availableFor(stock, origin) {
   if (!stock) return null;
   if (origin === 'stock') return stock.local?.stock ?? 0;
   if (origin === 'exhibicion') return stock.local?.exhibicion ?? 0;
+  if (origin === 'web') return stock.web?.unlimited ? Infinity : (stock.web?.qty ?? 0);
   return stock.rolon ?? 0;
 }
 
-// Valores iniciales al agregar un producto: del local si hay, si no Rolón.
+// Valores iniciales al agregar un producto: del local si hay, si no Rolón, si no web.
 export function defaultLineValue(stock) {
   const origin = ORIGINS.find((o) => (availableFor(stock, o) ?? 0) > 0) ?? 'stock';
-  return { qty: 1, origin, delivery: origin === 'rolon' ? 'retira_local' : 'ahora', pickupLocalId: null };
+  return { qty: 1, origin, delivery: fromRolon(origin) ? 'retira_local' : 'ahora', pickupLocalId: null };
 }
 
 // Formulario de cantidad / origen / entrega / local de retiro. Sirve para
@@ -61,7 +65,7 @@ export default function LineEditor({ stock, locales, ownLocalId, value, onChange
               <label key={o} className={`${styles.option} ${value.origin === o ? styles.optionOn : ''} ${disabled ? styles.optionOff : ''}`}>
                 <input type="radio" name="origin" checked={value.origin === o} disabled={disabled} onChange={() => setOrigin(o)} />
                 <span>{ORIGIN_LABELS[o]}</span>
-                {avail != null && <span className={`${styles.avail} num`}>{avail}</span>}
+                {avail != null && <span className={`${styles.avail} num`}>{avail === Infinity ? 'hay' : avail}</span>}
               </label>
             );
           })}
