@@ -154,3 +154,7 @@
 .receiptBlock ul { display: flex; flex-direction: column; gap: 2px; }
 .receiptRow { display: flex; justify-content: space-between; gap: var(--s-3); }
 .pendingTag { color: var(--pending); font-weight: 600; }
+
+/* ---- Impresión de recibo y ticket de cambio ---- */
+.printBar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.printAuto { display: inline-flex; align-items: center; gap: var(--s-2); margin-left: auto; font-size: var(--fs-sm); color: var(--ink-2); }

@@ -5,3 +5,4 @@ dist
 *.local
 .superpowers/sdd/
 vite.config.js.timestamp-*
+.git-roto/

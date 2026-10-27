@@ -13,6 +13,7 @@ import PaymentBox from './PaymentBox.jsx';
 import RefundBox, { refundCovers } from './RefundBox.jsx';
 import { KindTag, LineDialog, LineRow, activeLinesOf, lineBody } from './lineParts.jsx';
 import { moneyText, parseMoney } from './money.js';
+import { exchangeTicketHtml, getAutoPrint, printHtml, printSaleDocs, saleReceiptHtml, setAutoPrint } from '../../lib/printing.js';
 import styles from './caja.module.css';
 
 const hasOdoo = (o) => Boolean(o.odooOrderId || o.odooOrders?.length);
@@ -136,6 +137,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   const [annul, setAnnul] = useState(null); // null | { reason }
   const [holderReason, setHolderReason] = useState(null);
   const [refundPending, setRefundPending] = useState(false);
+  const [autoPrint, setAutoPrintState] = useState(getAutoPrint);
   const seq = useRef(0);
   const autoInvoice = useRef(false);
 
@@ -205,6 +207,15 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
     ...(config.paymentMethods ?? []).map((m) => [m.id, m]),
     ...(config.creditMethod ? [[config.creditMethod.id, config.creditMethod]] : []),
   ]), [config]);
+  const printCtx = {
+    localName: locale?.name ?? order?.localId ?? '',
+    methodLabel: (p) => {
+      const m = methodById.get(p.methodId);
+      const detail = m?.details?.find((d) => d.id === p.detailId)?.label;
+      return [m?.label ?? p.methodId, detail].filter(Boolean).join(' · ');
+    },
+  };
+  const toggleAutoPrint = (on) => { setAutoPrint(on); setAutoPrintState(on); };
   const refundMethods = useMemo(
     () => (config.paymentMethods ?? []).filter((m) => m.active !== false && m.id !== (config.creditMethod?.id ?? 'saldo')),
     [config],
@@ -256,8 +267,9 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
     setNotice({ kind: 'error', text: '' });
     try {
       await api(`/orders/${orderId}/confirm`, { method: 'POST' });
-      await load();
+      const res = await load();
       onChanged?.();
+      if (autoPrint && res?.order?.status === 'confirmado') printSaleDocs(res.order, printCtx).catch(() => {});
     } catch (err) {
       // 409: no se pudo reclamar el pedido (p. ej. caja cerrada); 502: falló Odoo.
       setConfirmError({ message: err.message, cashClosed: err.status === 409 && err.message.includes(CASH_CLOSED) });
@@ -332,6 +344,16 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
       <Notice kind="error">{loadError}</Notice>
 
       {status === 'confirmado' && exchange && <ExchangeReceipt order={order} locale={locale} methodById={methodById} />}
+      {status === 'confirmado' && lines.length > 0 && (
+        <div className={styles.printBar}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => printHtml(saleReceiptHtml(order, printCtx))}>Imprimir recibo</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => printHtml(exchangeTicketHtml(order))}>Imprimir ticket de cambio</button>
+          <label className={styles.printAuto}>
+            <input type="checkbox" checked={autoPrint} onChange={(e) => toggleAutoPrint(e.target.checked)} />
+            Imprimir solo al confirmar (en esta PC)
+          </label>
+        </div>
+      )}
       {status === 'confirmado' && !exchange && (
         <section className={styles.result} aria-label="Resultado de la venta">
           <p className={styles.resultKicker}>Venta confirmada en Odoo</p>
