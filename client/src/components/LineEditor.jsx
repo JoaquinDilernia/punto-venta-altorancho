@@ -65,7 +65,7 @@ export default function LineEditor({ stock, locales, ownLocalId, value, onChange
               <label key={o} className={`${styles.option} ${value.origin === o ? styles.optionOn : ''} ${disabled ? styles.optionOff : ''}`}>
                 <input type="radio" name="origin" checked={value.origin === o} disabled={disabled} onChange={() => setOrigin(o)} />
                 <span>{ORIGIN_LABELS[o]}</span>
-                {avail != null && <span className={`${styles.avail} num`}>{avail === Infinity ? 'hay' : avail}</span>}
+                {avail != null && <span className={`${styles.avail} ${avail === 0 ? styles.availNone : ''} num`}>{avail === Infinity ? 'hay' : avail}</span>}
               </label>
             );
           })}

@@ -1,4 +1,5 @@
 .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.badge { padding: 3px 8px; border-radius: 6px; background: var(--done-bg); color: var(--done); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.badge { display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 8px; border-radius: 6px; background: var(--done-bg); color: var(--done); font-size: var(--fs-xs); font-weight: 500; white-space: nowrap; }
+.badge strong { font-weight: 700; font-variant-numeric: tabular-nums; }
 .empty { background: var(--wash-2); color: var(--ink-3); }
-.others { font-size: 13px; color: var(--ink-3); }
+.others { flex-basis: 100%; font-size: var(--fs-xs); color: var(--ink-3); }

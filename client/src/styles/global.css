@@ -9,19 +9,21 @@
   /* Base */
   --paper: #ffffff;
   --ink: #353434;
+  --ink-hover: #232222;
   --ink-2: #5f5d5c;
-  --ink-3: #8e8b8a;
-  --line: #e7e5e4;
+  --ink-3: #807d7c; /* AA sobre blanco y sobre --wash */
+  --line: #e9e7e5;
   --line-strong: #d3d0ce;
-  --wash: #f6f6f5;
-  --wash-2: #eeedec;
+  --wash: #f5f4f2;
+  --wash-2: #ecebe9;
 
   /* Estados de línea / pedido */
-  --pending: #9a5b00;
+  --pending: #8f5400;
   --pending-bg: #fff2d9;
   --sent: #3446c4;
   --sent-bg: #eaedfd;
   --done: #16794a;
+  --done-hover: #11653d;
   --done-bg: #e1f4e9;
   --removed: #b42318;
   --removed-bg: #fdecea;
@@ -39,6 +41,11 @@
   --r-md: 12px;
   --r-lg: 18px;
   --r-pill: 999px;
+
+  /* Elevación: sombras cortas y cálidas, nunca difusas */
+  --shadow-1: 0 1px 2px rgba(53, 52, 52, 0.06);
+  --shadow-2: 0 1px 2px rgba(53, 52, 52, 0.06), 0 4px 12px rgba(53, 52, 52, 0.06);
+  --shadow-3: 0 2px 6px rgba(53, 52, 52, 0.08), 0 16px 40px rgba(53, 52, 52, 0.16);
 
   /* Tipo */
   --font: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -61,11 +68,18 @@
   --s-10: 40px;
   --s-12: 48px;
 
-  --focus: 0 0 0 3px rgba(53, 52, 52, 0.25);
+  /* Movimiento: rápido y con salida suave (ease-out fuerte) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --t-fast: 120ms;
+  --t-med: 220ms;
+
+  --focus: 0 0 0 3px rgba(53, 52, 52, 0.22);
+  --backdrop: rgba(30, 29, 29, 0.42);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 body {
   font-family: var(--font);
   font-size: var(--fs-md);
@@ -75,12 +89,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-button { cursor: pointer; font: inherit; color: inherit; }
+button { cursor: pointer; font: inherit; color: inherit; touch-action: manipulation; }
 button:disabled { cursor: not-allowed; }
 input, select, textarea { font: inherit; color: inherit; }
 img { display: block; }
 ul, ol { list-style: none; }
+fieldset { border: 0; min-inline-size: 0; }
 :focus-visible { outline: none; box-shadow: var(--focus); }
+::selection { background: rgba(53, 52, 52, 0.14); }
+
+/* Casillas y radios nativos con el grafito de la marca y tamaño tocable. */
+input[type='checkbox'], input[type='radio'] {
+  width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--ink); cursor: pointer; vertical-align: -3px;
+}
+input[type='checkbox']:disabled, input[type='radio']:disabled { cursor: not-allowed; }
 
 .num { font-variant-numeric: tabular-nums; }
 
@@ -97,25 +119,34 @@ ul, ol { list-style: none; }
   font-size: var(--fs-md);
   font-weight: 500;
   white-space: nowrap;
-  transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  user-select: none;
+  transition:
+    background-color var(--t-fast) ease, border-color var(--t-fast) ease, color var(--t-fast) ease,
+    opacity var(--t-fast) ease, transform 160ms var(--ease-out);
 }
+/* Respuesta inmediata al tocar. */
+.btn:not(:disabled):active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.4; }
 .btn-primary { background: var(--ink); color: var(--paper); }
-.btn-primary:not(:disabled):hover { background: #242323; }
 .btn-secondary { background: var(--paper); border-color: var(--line-strong); }
-.btn-secondary:not(:disabled):hover { border-color: var(--ink); }
 .btn-danger { background: var(--paper); border-color: var(--removed); color: var(--removed); }
-.btn-danger:not(:disabled):hover { background: var(--removed-bg); }
 .btn-success { background: var(--done); color: var(--paper); }
-.btn-success:not(:disabled):hover { background: #11653d; }
 .btn-ghost { background: transparent; color: var(--ink-2); }
-.btn-ghost:not(:disabled):hover { color: var(--ink); background: var(--wash); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:not(:disabled):hover { background: var(--ink-hover); }
+  .btn-secondary:not(:disabled):hover { border-color: var(--ink); }
+  .btn-danger:not(:disabled):hover { background: var(--removed-bg); }
+  .btn-success:not(:disabled):hover { background: var(--done-hover); }
+  .btn-ghost:not(:disabled):hover { color: var(--ink); background: var(--wash); }
+}
 .btn-lg { min-height: 56px; font-size: var(--fs-lg); font-weight: 600; border-radius: var(--r-md); }
 .btn-sm { min-height: 36px; padding: 0 var(--s-3); font-size: var(--fs-sm); border-radius: var(--r-sm); }
 .btn-block { width: 100%; }
+.btn-icon { width: 44px; padding: 0; font-size: 20px; line-height: 1; }
+.btn-icon.btn-sm { width: 36px; }
 
 /* ---- Campos ---- */
-.field { display: flex; flex-direction: column; gap: var(--s-1); }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field-label { font-size: var(--fs-sm); font-weight: 500; color: var(--ink-2); }
 .input, .select {
   width: 100%;
@@ -125,20 +156,37 @@ ul, ol { list-style: none; }
   border-radius: var(--r-md);
   background: var(--paper);
   font-size: var(--fs-md);
-  transition: border-color 120ms ease;
+  transition: border-color var(--t-fast) ease, box-shadow var(--t-fast) ease;
 }
+textarea.input { padding: 10px var(--s-3); line-height: 1.45; resize: vertical; }
 .input::placeholder { color: var(--ink-3); }
-.input:focus, .select:focus { border-color: var(--ink); box-shadow: none; outline: none; }
-.select { padding-right: var(--s-8); appearance: none;
+.input:focus, .select:focus { border-color: var(--ink); box-shadow: var(--focus); outline: none; }
+.input:disabled, .select:disabled { background: var(--wash); color: var(--ink-3); cursor: not-allowed; }
+.input[aria-invalid='true'] { border-color: var(--removed); }
+.select { padding-right: var(--s-8); appearance: none; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23353434' stroke-width='1.6'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 12px center; }
 .select-sm { min-height: 36px; font-size: var(--fs-sm); border-radius: var(--r-sm); }
 .input-sm { min-height: 36px; font-size: var(--fs-sm); border-radius: var(--r-sm); }
+/* Sin flechitas en los números: se usa el teclado o los botones − / +. */
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Casilla con texto: toda la fila es tocable. */
+.check-row { display: flex; align-items: center; gap: var(--s-3); min-height: 44px; font-weight: 500; cursor: pointer; }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+/* ---- Entradas de diálogos y hojas ---- */
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } }
+@keyframes drawer-in { from { transform: translateX(100%); } }
+@keyframes drawer-in-left { from { transform: translateX(-100%); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -151,5 +199,7 @@ ul, ol { list-style: none; }
 @media (pointer: coarse) {
   .input, .select, textarea.input { font-size: 16px; }
   .btn-sm { min-height: 44px; }
-  .select-sm { min-height: 44px; font-size: 16px; }
+  .btn-icon.btn-sm { width: 44px; }
+  .select-sm, .input-sm { min-height: 44px; font-size: 16px; }
+  input[type='checkbox'], input[type='radio'] { width: 22px; height: 22px; }
 }

@@ -8,7 +8,10 @@
   gap: var(--s-4);
   min-height: 56px;
   padding: 0 var(--s-5);
-  background: var(--paper);
+  padding-top: env(safe-area-inset-top);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: baseline; gap: var(--s-3); flex-shrink: 0; }
@@ -104,13 +107,19 @@
   align-items: flex-start;
   padding: var(--s-3) var(--s-4);
   border-radius: var(--r-md);
+  border: 1px solid transparent;
   font-size: var(--fs-sm);
+  font-weight: 500;
   line-height: 1.45;
+  animation: rise-in var(--t-med) var(--ease-out);
 }
-.notice-error { background: var(--removed-bg); color: var(--removed); }
-.notice-success { background: var(--done-bg); color: var(--done); }
-.notice-info { background: var(--wash); color: var(--ink-2); }
-.noticeClose { margin-left: auto; border: none; background: none; color: inherit; font-size: var(--fs-lg); line-height: 1; }
+.notice > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.notice-error { background: var(--removed-bg); border-color: rgba(180, 35, 24, 0.22); color: var(--removed); }
+.notice-success { background: var(--done-bg); border-color: rgba(22, 121, 74, 0.22); color: var(--done); }
+.notice-info { background: var(--wash); border-color: var(--line); color: var(--ink-2); font-weight: 400; }
+.noticeIcon { flex-shrink: 0; margin-top: 1px; }
+.noticeClose { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -8px -4px 0; border: none; border-radius: var(--r-sm); background: none; color: inherit; font-size: var(--fs-lg); line-height: 1; }
+.noticeClose:hover { background: rgba(0, 0, 0, 0.05); }
 
 /* ---- Vacío ---- */
 .empty {
@@ -118,19 +127,26 @@
   flex-direction: column;
   align-items: center;
   gap: var(--s-2);
-  padding: var(--s-12) var(--s-6);
+  padding: var(--s-10) var(--s-6);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-lg);
   color: var(--ink-3);
+  font-size: var(--fs-sm);
   text-align: center;
+  text-wrap: balance;
 }
 .emptyTitle { color: var(--ink-2); font-size: var(--fs-lg); font-weight: 500; }
 
 /* ---- Ingreso ---- */
 .loginPage {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--s-6) var(--s-4);
-  background: var(--wash);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, transparent 60%),
+    var(--wash);
 }
 .loginCard {
   width: 100%;
@@ -142,6 +158,11 @@
   background: var(--paper);
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
+  box-shadow: var(--shadow-2);
+  animation: pop-in 320ms var(--ease-out);
+}
+@media (max-width: 480px) {
+  .loginCard { padding: var(--s-8) var(--s-5); border-radius: var(--r-lg); }
 }
 .loginLogo { width: 200px; height: auto; margin-bottom: var(--s-2); }
 .loginTitle { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }

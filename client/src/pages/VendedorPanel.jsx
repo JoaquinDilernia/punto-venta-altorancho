@@ -52,11 +52,13 @@ function LineSheet({ product, line, locales, ownLocalId, onConfirm, onClose }) {
             <p className={styles.sku}>{(product ?? line).sku}</p>
             <h2>{(product ?? line).name}</h2>
           </div>
-          <button type="button" className="btn btn-ghost" onClick={onClose} aria-label="Cerrar">×</button>
+          <button type="button" className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
-        {product && <StockBadges stock={product.stock} />}
-        <LineEditor stock={product?.stock ?? null} locales={locales} ownLocalId={ownLocalId} value={value} onChange={setValue} />
-        <Notice kind="error">{noStock ? 'Sin stock disponible en ninguna ubicación' : error}</Notice>
+        <div className={styles.sheetBody}>
+          {product && <StockBadges stock={product.stock} />}
+          <LineEditor stock={product?.stock ?? null} locales={locales} ownLocalId={ownLocalId} value={value} onChange={setValue} />
+          <Notice kind="error">{noStock ? 'Sin stock disponible en ninguna ubicación' : error}</Notice>
+        </div>
         <div className={styles.sheetActions}>
           <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>Cancelar</button>
           <button type="button" className="btn btn-primary btn-lg" onClick={confirm} disabled={saving || missingLocal || noStock}>
@@ -79,9 +81,9 @@ function CartLine({ line, localName, busy, onlyLine, onQty, onEdit, onRemove }) 
           {line.delivery === 'retira_otro_local' && line.pickupLocalId ? ` (${localName(line.pickupLocalId)})` : ''}
         </p>
         <p className={`${styles.linePrice} num`}>
-          {formatMoney(line.basePrice)}
-          {promo && <s> {formatMoney(line.fullPrice)}</s>}
-          {' '}× {line.qty} = <strong>{formatMoney(line.basePrice * line.qty)}</strong>
+          <span>{formatMoney(line.basePrice)} × {line.qty}</span>
+          {promo && <s>{formatMoney(line.fullPrice)}</s>}
+          <strong>{formatMoney(line.basePrice * line.qty)}</strong>
         </p>
       </div>
       <div className={styles.lineActions}>
@@ -291,13 +293,18 @@ export default function VendedorPanel() {
                 onClick={() => selectCart(c.id)}
               >
                 {c.number}
+                <span className={styles.cartCount} aria-label={`${activeLinesOf(c).length} productos`}>{activeLinesOf(c).length}</span>
               </button>
             ))}
           </nav>
         )}
-        {cart && <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectCart(null)}>Nuevo cliente</button>}
-        {config && (
-          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => setPicker(true)}>Cambio / devolución</button>
+        {(cart || config) && (
+          <div className={styles.stripActions}>
+            {cart && <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectCart(null)}>+ Nuevo cliente</button>}
+            {config && (
+              <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => setPicker(true)}>Cambio / devolución</button>
+            )}
+          </div>
         )}
       </div>
 
@@ -307,8 +314,20 @@ export default function VendedorPanel() {
         </div>
 
         <aside className={styles.cartCol} aria-label="Carrito">
-          <h2 className={styles.cartTitle}>{cart ? `Carrito ${cart.number}` : 'Carrito'}</h2>
-          {sent && <div className={styles.sent} role="status">{sent}</div>}
+          <div className={styles.cartHead}>
+            <h2 className={`${styles.cartTitle} num`}>{cart ? `Carrito ${cart.number}` : 'Carrito'}</h2>
+            {lines.length > 0 && (
+              <span className={styles.cartMeta}>
+                {lines.reduce((s, l) => s + l.qty, 0)} {lines.reduce((s, l) => s + l.qty, 0) === 1 ? 'unidad' : 'unidades'}
+              </span>
+            )}
+          </div>
+          {sent && (
+            <div className={styles.sent} role="status">
+              <span>✓ {sent}</span>
+              <small>Buscá un producto para empezar con el próximo cliente.</small>
+            </div>
+          )}
           <Notice kind={notice.kind} onClose={notice.text ? () => setNotice({ kind: 'error', text: '' }) : undefined}>{notice.text}</Notice>
 
           {!cart && !sent && <EmptyState title="Carrito vacío">Buscá un producto y tocá Agregar, o tocá Cambio / devolución.</EmptyState>}

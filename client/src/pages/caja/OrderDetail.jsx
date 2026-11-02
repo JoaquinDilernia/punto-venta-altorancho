@@ -43,6 +43,16 @@ const normShipping = (s, amount, home) => JSON.stringify([...SHIP_KEYS.map((k) =
 // Funciona con el objeto de campos o con una función (último valor) -> campos.
 const draftUpdater = (setter) => (change) => setter((prev) => ({ ...prev, ...(typeof change === 'function' ? change(prev) : change) }));
 
+// Guardar un bloque editable: se resalta cuando hay cambios sin guardar.
+function SaveButton({ dirty, disabled, onClick, label }) {
+  return (
+    <>
+      <button type="button" className={`btn ${dirty && !disabled ? 'btn-primary' : 'btn-secondary'}`} disabled={disabled} onClick={onClick}>{label}</button>
+      <span className={styles.hint} role="status">{dirty ? 'Hay cambios sin guardar' : 'Guardado'}</span>
+    </>
+  );
+}
+
 const STATE_LABELS = { done: 'validado', cancel: 'cancelado', draft: 'borrador', posted: 'publicada', assigned: 'listo', confirmed: 'en espera', waiting: 'en espera' };
 const CONFIRMED_LABEL = { cambio: 'Cambio confirmado', devolucion: 'Devolución confirmada' };
 
@@ -331,13 +341,15 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   return (
     <div className={styles.detail}>
       <header className={styles.detailHead}>
-        <button type="button" className="btn btn-ghost" onClick={onBack}>← {backLabel}</button>
-        <h1 className={styles.viewTitle}>{exchange ? KIND_LABELS[order.kind] ?? 'Operación' : 'Pedido'} {order.number}</h1>
-        <KindTag kind={order.kind} />
-        <OrderStatusChip status={status} large />
-        <span className={styles.muted}>
-          {order.sellerName} · enviado {formatDateTime(order.sentAt ?? order.createdAt)}
-        </span>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {backLabel}</button>
+        <div className={styles.detailTitleRow}>
+          <h1 className={`${styles.viewTitle} num`}>{exchange ? KIND_LABELS[order.kind] ?? 'Operación' : 'Pedido'} {order.number}</h1>
+          <KindTag kind={order.kind} />
+          <OrderStatusChip status={status} large />
+          <span className={styles.muted}>
+            {order.sellerName} · enviado {formatDateTime(order.sentAt ?? order.createdAt)}
+          </span>
+        </div>
       </header>
 
       <Notice kind={notice.kind} onClose={notice.text ? () => setNotice({ kind: 'error', text: '' }) : undefined}>{notice.text}</Notice>
@@ -430,10 +442,12 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           </section>
 
           {editable && needsShipping && (
-            <div className={styles.saveBlock}>
-              <ShippingFields value={shipping} onChange={draftUpdater(setShipping)} defaultHomeAmount={config?.settings?.homeServiceDefaultAmount} />
-              <button type="button" className="btn btn-secondary" disabled={busy || confirming || !shippingDirty} onClick={saveShipping}>Guardar envío</button>
-            </div>
+            <ShippingFields
+              value={shipping}
+              onChange={draftUpdater(setShipping)}
+              defaultHomeAmount={config?.settings?.homeServiceDefaultAmount}
+              footer={<SaveButton dirty={shippingDirty} disabled={busy || confirming || !shippingDirty} onClick={saveShipping} label="Guardar envío" />}
+            />
           )}
           {!editable && order.shipping && (
             <section className={styles.card}>
@@ -446,10 +460,13 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           )}
 
           {editable ? (
-            <div className={styles.saveBlock}>
-              <CustomerForm value={customer} onChange={draftUpdater(setCustomer)} decoradorTagId={config.settings?.decoradorTagId} showCredit />
-              <button type="button" className="btn btn-secondary" disabled={busy || confirming || !customerDirty} onClick={saveCustomer}>Guardar cliente</button>
-            </div>
+            <CustomerForm
+              value={customer}
+              onChange={draftUpdater(setCustomer)}
+              decoradorTagId={config.settings?.decoradorTagId}
+              showCredit
+              footer={<SaveButton dirty={customerDirty} disabled={busy || confirming || !customerDirty} onClick={saveCustomer} label="Guardar cliente" />}
+            />
           ) : order.customer && (
             <section className={styles.card}>
               <h2 className={styles.cardTitle}>Cliente</h2>

@@ -2,7 +2,7 @@ import styles from './StockBadges.module.css';
 
 function Badge({ label, qty, text }) {
   const empty = qty === 0;
-  return <span className={`${styles.badge} ${empty ? styles.empty : ''}`}>{label} {text ?? qty}</span>;
+  return <span className={`${styles.badge} ${empty ? styles.empty : ''}`}>{label} <strong>{text ?? qty}</strong></span>;
 }
 
 // Stock por depósito. En 0 el chip se apaga pero el número se sigue leyendo.

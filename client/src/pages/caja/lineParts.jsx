@@ -50,11 +50,13 @@ export function LineDialog({ product, line, locales, ownLocalId, onConfirm, onCl
             <p className={styles.muted}>{shown.sku}</p>
             <h2 className={styles.dialogTitle}>{shown.name}</h2>
           </div>
-          <button type="button" className="btn btn-ghost" onClick={onClose} aria-label="Cerrar">×</button>
+          <button type="button" className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
-        {product && <StockBadges stock={product.stock} />}
-        <LineEditor stock={product?.stock ?? null} locales={locales} ownLocalId={ownLocalId} value={value} onChange={setValue} />
-        <Notice kind="error">{noStock ? 'Sin stock disponible en ninguna ubicación' : error}</Notice>
+        <div className={styles.dialogBody}>
+          {product && <StockBadges stock={product.stock} />}
+          <LineEditor stock={product?.stock ?? null} locales={locales} ownLocalId={ownLocalId} value={value} onChange={setValue} />
+          <Notice kind="error">{noStock ? 'Sin stock disponible en ninguna ubicación' : error}</Notice>
+        </div>
         <div className={styles.dialogActions}>
           <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>Cancelar</button>
           <button type="button" className="btn btn-primary btn-lg" onClick={confirm} disabled={saving || missingLocal || noStock}>

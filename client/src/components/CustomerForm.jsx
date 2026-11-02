@@ -31,7 +31,8 @@ export function customerErrors(c) {
 // `prefillDoc`: documento a precargar (y buscar) si el campo está vacío, p. ej.
 // el de la compra que vuelve. `showCredit`: saldo a favor debajo del documento.
 // `afterDoc`: contenido extra debajo del documento (p. ej. cambio de titular).
-export default function CustomerForm({ value, onChange, decoradorTagId, prefillDoc = '', showCredit = false, afterDoc = null }) {
+// `footer`: acciones al pie de la tarjeta (p. ej. Guardar cliente).
+export default function CustomerForm({ value, onChange, decoradorTagId, prefillDoc = '', showCredit = false, afterDoc = null, footer = null }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState({ kind: 'info', text: '' });
   const prefilled = useRef('');
@@ -140,11 +141,11 @@ export default function CustomerForm({ value, onChange, decoradorTagId, prefillD
         </label>
         <label className="field">
           <span className="field-label">Teléfono</span>
-          <input className="input" type="tel" autoComplete="off" value={value.phone} onChange={set('phone')} />
+          <input className="input" type="tel" inputMode="tel" autoComplete="off" value={value.phone} onChange={set('phone')} />
         </label>
         <label className="field">
           <span className="field-label">Email</span>
-          <input className="input" type="email" autoComplete="off" value={value.email} onChange={set('email')} />
+          <input className="input" type="email" inputMode="email" autoCapitalize="off" autoComplete="off" value={value.email} onChange={set('email')} />
         </label>
         <label className={`field ${styles.wide}`}>
           <span className="field-label">Domicilio</span>
@@ -159,6 +160,7 @@ export default function CustomerForm({ value, onChange, decoradorTagId, prefillD
           <input className="input" autoComplete="off" value={value.zip} onChange={set('zip')} />
         </label>
       </div>
+      {footer && <div className={styles.footer}>{footer}</div>}
     </fieldset>
   );
 }

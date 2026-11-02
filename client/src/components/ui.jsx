@@ -59,10 +59,20 @@ export function OrderStatusChip({ status, large }) {
   return <Chip tone={meta.tone} large={large}>{meta.label}</Chip>;
 }
 
+function NoticeIcon({ kind }) {
+  return (
+    <svg className={styles.noticeIcon} viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+      <circle cx="10" cy="10" r="8" />
+      {kind === 'success' ? <path d="M6.5 10.2l2.4 2.4 4.6-5" /> : <><path d="M10 6v4.5" /><path d="M10 13.6v.1" /></>}
+    </svg>
+  );
+}
+
 export function Notice({ kind = 'info', children, onClose }) {
   if (!children) return null;
   return (
     <div className={`${styles.notice} ${styles[`notice-${kind}`]}`} role={kind === 'error' ? 'alert' : 'status'}>
+      {kind !== 'info' && <NoticeIcon kind={kind} />}
       <span>{children}</span>
       {onClose && <button type="button" className={styles.noticeClose} onClick={onClose} aria-label="Cerrar aviso">×</button>}
     </div>

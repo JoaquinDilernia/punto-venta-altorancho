@@ -368,7 +368,11 @@ export default function PaymentBox({
             <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={onConfirm}>
               {confirming ? 'Confirmando en Odoo…' : order.status === 'error' ? 'Reintentar confirmación' : `Confirmar ${CONFIRM_NOUN[order.kind] ?? 'venta'}`}
             </button>
-            {!confirming && allBlockers.length > 0 && <p className={styles.hint}>{allBlockers.join(' · ')}</p>}
+            {!confirming && allBlockers.length > 0 && (
+              <ul className={styles.blockers} aria-label="Falta para confirmar">
+                {allBlockers.map((b) => <li key={b}>{b}</li>)}
+              </ul>
+            )}
           </>
         )}
       </div>

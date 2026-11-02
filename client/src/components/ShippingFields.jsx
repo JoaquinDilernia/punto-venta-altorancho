@@ -2,7 +2,7 @@ import styles from './CustomerForm.module.css';
 
 const FIELDS = [
   ['street', 'Calle', true], ['number', 'Número', false, 'numeric'], ['floor', 'Piso / depto'],
-  ['city', 'Localidad'], ['zip', 'Código postal'], ['phone', 'Teléfono'],
+  ['city', 'Localidad'], ['zip', 'Código postal'], ['phone', 'Teléfono', false, 'tel'],
 ];
 
 export const EMPTY_SHIPPING = { street: '', number: '', floor: '', city: '', zip: '', phone: '', notes: '', amount: '', homeService: false, homeAmount: '' };
@@ -35,7 +35,7 @@ export function shippingBody(s) {
 }
 
 // Datos del envío a domicilio (si alguna línea es "Envío a domicilio").
-export default function ShippingFields({ value, onChange, defaultHomeAmount }) {
+export default function ShippingFields({ value, onChange, defaultHomeAmount, footer = null }) {
   const set = (key) => (e) => onChange({ [key]: e.target.value });
   const toggleHome = (e) => {
     const on = e.target.checked;
@@ -57,19 +57,21 @@ export default function ShippingFields({ value, onChange, defaultHomeAmount }) {
           <span className="field-label">Costo del envío ($, a mano)</span>
           <input className="input num" inputMode="decimal" placeholder="0" value={value.amount} onChange={set('amount')} />
         </label>
-        <label className={`field ${styles.wide}`}>
-          <span className="field-label">
-            <input type="checkbox" checked={Boolean(value.homeService)} onChange={toggleHome} /> Subida al domicilio (escaleras, etc.)
-          </span>
+        <div className={`${styles.wide} ${styles.amountRow}`}>
+          <label className="check-row">
+            <input type="checkbox" checked={Boolean(value.homeService)} onChange={toggleHome} />
+            <span>Subida al domicilio (escaleras, etc.)</span>
+          </label>
           {value.homeService && (
-            <input className="input num" inputMode="decimal" placeholder="Monto con IVA ($)" value={value.homeAmount ?? ''} onChange={set('homeAmount')} />
+            <input className="input num" inputMode="decimal" aria-label="Monto de la subida al domicilio" placeholder="Monto con IVA ($)" value={value.homeAmount ?? ''} onChange={set('homeAmount')} />
           )}
-        </label>
+        </div>
         <label className={`field ${styles.wide}`}>
           <span className="field-label">Notas</span>
           <textarea className={`input ${styles.notes}`} rows={2} value={value.notes} onChange={set('notes')} />
         </label>
       </div>
+      {footer && <div className={styles.footer}>{footer}</div>}
     </fieldset>
   );
 }

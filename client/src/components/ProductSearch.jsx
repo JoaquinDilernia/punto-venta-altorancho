@@ -45,17 +45,24 @@ export default function ProductSearch({ payMethods, onPick, localId = null, pick
 
   return (
     <section className={styles.search} aria-label="Buscar productos">
-      <input
-        className="input"
-        type="search"
-        inputMode="search"
-        autoComplete="off"
-        placeholder="Buscar por nombre o SKU (4 letras o más)"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className={styles.searchBox}>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+        </svg>
+        <input
+          className="input"
+          type="search"
+          inputMode="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          aria-label="Buscar productos"
+          placeholder="Buscar por nombre o SKU"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
       <Notice kind="error">{error}</Notice>
-      {short && <p className={styles.hint}>Escribí al menos {MIN_CHARS} letras para buscar.</p>}
+      {short && <p className={styles.hint}>{query.trim() ? `Seguí escribiendo: ${MIN_CHARS} letras o más.` : `Escribí al menos ${MIN_CHARS} letras del nombre o el SKU.`}</p>}
       {!short && loading && <p className={styles.hint}>Buscando…</p>}
       {!short && !loading && !error && results.length === 0 && <p className={styles.hint}>No se encontraron productos.</p>}
       <ul className={styles.list}>
