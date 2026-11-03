@@ -302,7 +302,7 @@ export default function PaymentBox({
                   <span>¿Quiere factura?</span>
                 </label>
                 {!invoicesOk && <p className={styles.hint}>Este local todavía no factura desde el sistema</p>}
-                {invoiceHint && invoicesOk && <p className={styles.hint}>La compra original tenía factura: la nota de crédito es por lo que vuelve y se factura solo lo que paga</p>}
+                {invoiceHint && invoicesOk && <p className={styles.hint}>Hace falta factura para aplicar la nota de crédito</p>}
                 {cuitNoIva && <Notice kind="info">Buscá el CUIT en ARCA para saber si es A o B</Notice>}
               </section>
             )}
