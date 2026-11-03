@@ -145,6 +145,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   const [payError, setPayError] = useState(''); // errores de cobro: se ven dentro de PaymentBox
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState(null);
+  const [confirmingWith, setConfirmingWith] = useState(null); // true | false mientras confirma
   const [dialog, setDialog] = useState(null); // { product } | { line }
   const [annul, setAnnul] = useState(null); // null | { reason }
   const [holderReason, setHolderReason] = useState(null);
@@ -276,11 +277,16 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   }
   const saveNotes = () => patch({ notes });
 
-  async function confirm() {
+  // `withInvoice`: botón elegido (con / sin factura); undefined = reintento, sigue lo guardado.
+  async function confirm(withInvoice) {
     setConfirming(true);
+    setConfirmingWith(withInvoice ?? null);
     setConfirmError(null);
     setNotice({ kind: 'error', text: '' });
     try {
+      if (withInvoice !== undefined && Boolean(order.wantsInvoice) !== withInvoice) {
+        await api(`/orders/${orderId}`, { method: 'PATCH', body: { wantsInvoice: withInvoice } });
+      }
       await api(`/orders/${orderId}/confirm`, { method: 'POST' });
       const res = await load();
       onChanged?.();
@@ -292,6 +298,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
       onChanged?.();
     } finally {
       setConfirming(false);
+      setConfirmingWith(null);
     }
   }
 
@@ -572,6 +579,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           payError={payError}
           onPatch={patchPayment}
           onConfirm={confirm}
+          confirmingWith={confirmingWith}
           onGoCash={onGoCash}
           invoiceHint={invoiceHint}
         >

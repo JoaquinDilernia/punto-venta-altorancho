@@ -242,3 +242,5 @@
 /* ---- Impresión de recibo y ticket de cambio ---- */
 .printBar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 .printAuto { display: inline-flex; align-items: center; gap: var(--s-2); margin-left: auto; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+.confirmPair { display: flex; flex-direction: column; gap: var(--s-2); }
+.confirmPair :global(.btn-secondary) { background: var(--paper); }

@@ -5,11 +5,15 @@ import { parseMoney } from '../caja/money.js';
 import { Check, Drawer, numberText, slugify, useApiData } from './adminParts.jsx';
 import styles from './admin.module.css';
 
-const EMPTY = { id: null, label: '', discountPct: '0', odooName: '', hasDetails: false, details: [], order: '', active: true };
+const EMPTY = { id: null, label: '', discountPct: '0', odooName: '', odooJournal: '', hasDetails: false, details: [], order: '', active: true };
+
+// Diario donde se registra el cobro en Odoo: 'local' = la caja de cada local.
+const journalText = (v) => (v == null ? '' : String(v));
+const journalValue = (t) => (t === '' ? null : t === 'local' ? 'local' : Number(t));
 
 function toForm(m) {
   return {
-    id: m.id, label: m.label ?? '', discountPct: numberText(m.discountPct ?? 0), odooName: m.odooName ?? '',
+    id: m.id, label: m.label ?? '', discountPct: numberText(m.discountPct ?? 0), odooName: m.odooName ?? '', odooJournal: journalText(m.odooJournal),
     hasDetails: (m.details ?? []).length > 0, details: (m.details ?? []).map((d) => ({ ...d })),
     order: String(m.order ?? ''), active: m.active !== false,
   };
@@ -17,6 +21,9 @@ function toForm(m) {
 
 export default function PaymentMethodsView() {
   const methods = useApiData('/admin/payment-methods');
+  const options = useApiData('/admin/options');
+  const journals = options.data?.paymentJournals ?? [];
+  const journalName = (v) => (v === 'local' ? 'Caja del local' : v ? (journals.find((j) => j.id === v)?.name ?? (options.data ? '—' : '…')) : 'No se registra');
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -62,7 +69,7 @@ export default function PaymentMethodsView() {
     try {
       await api(`/admin/payment-methods/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        body: { label: f.label.trim(), discountPct: pct.value, odooName: f.hasDetails ? null : f.odooName.trim(), details, order, active: f.active },
+        body: { label: f.label.trim(), discountPct: pct.value, odooName: f.hasDetails ? null : f.odooName.trim(), odooJournal: journalValue(f.odooJournal), details, order, active: f.active },
       });
       setSaved(`${f.label.trim()} guardado.`);
       setEditing(null);
@@ -87,7 +94,7 @@ export default function PaymentMethodsView() {
       {list.length > 0 && (
         <div className={styles.tableWrap}>
           <table className={`${styles.table} ${styles.clickable}`}>
-            <thead><tr><th>Orden</th><th>Nombre</th><th className={styles.right}>Descuento</th><th>Medio de Odoo</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Orden</th><th>Nombre</th><th className={styles.right}>Descuento</th><th>Medio de Odoo</th><th>Cobro en Odoo</th><th>Estado</th></tr></thead>
             <tbody>
               {list.map((m) => (
                 <tr key={m.id} tabIndex={0} onClick={() => openEdit(m)} onKeyDown={(e) => { if (e.key === 'Enter') openEdit(m); }} className={m.active === false ? styles.rowOff : ''}>
@@ -95,6 +102,7 @@ export default function PaymentMethodsView() {
                   <td><strong>{m.label}</strong></td>
                   <td className={`${styles.right} num`}>{m.discountPct} %</td>
                   <td>{m.details?.length ? m.details.map((d) => `${d.label}: ${d.odooName}`).join(' · ') : m.odooName}</td>
+                  <td>{journalName(m.odooJournal)}</td>
                   <td><Chip tone={m.active === false ? 'neutral' : 'done'}>{m.active === false ? 'Inactivo' : 'Activo'}</Chip></td>
                 </tr>
               ))}
@@ -144,6 +152,15 @@ export default function PaymentMethodsView() {
               <div><button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditing((f) => ({ ...f, details: [...f.details, { id: null, label: '', odooName: '' }] }))}>Agregar opción</button></div>
             </div>
           )}
+          <label className="field">
+            <span className="field-label">Diario del cobro en Odoo</span>
+            <select className="select" value={editing.odooJournal} onChange={(e) => set('odooJournal')(e.target.value)}>
+              <option value="">No registrar el cobro</option>
+              <option value="local">Caja del local</option>
+              {journals.map((j) => <option key={j.id} value={j.id}>{j.name}</option>)}
+            </select>
+            <span className={styles.hint}>Al facturar, la factura queda paga con un cobro en este diario.</span>
+          </label>
           <Check label="Medio activo" checked={editing.active} onChange={set('active')} />
         </Drawer>
       )}

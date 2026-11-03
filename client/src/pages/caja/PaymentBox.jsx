@@ -30,8 +30,8 @@ function MethodSelect({ methods, row, onChange, disabled }) {
   );
 }
 
-// Cobro: medio de pago (simple o dividido), descuento extra, factura, desglose
-// del servidor y "Confirmar venta". Los totales vienen SIEMPRE de `preview`
+// Cobro: medio de pago (simple o dividido), descuento extra, desglose del
+// servidor y "Confirmar con / sin factura". Los totales vienen SIEMPRE de `preview`
 // (o de `order.totals` si el pedido ya no se puede cambiar).
 // `onPatch(body)` devuelve la respuesta de `GET /orders/:id` posterior o null.
 // En cambios cobra solo `collect` (la diferencia); sin nada para cobrar no pide
@@ -40,7 +40,7 @@ function MethodSelect({ methods, row, onChange, disabled }) {
 // `invoiceHint`: la compra que vuelve tenía factura y hay algo nuevo (para la NC).
 export default function PaymentBox({
   order, preview, config, locale, busy, payError, editable, canConfirm, blockers, confirming, confirmError,
-  onPatch, onConfirm, onGoCash, invoiceHint = false, children = null,
+  onPatch, onConfirm, onGoCash, invoiceHint = false, confirmingWith = null, children = null,
 }) {
   const creditMethod = config.creditMethod ?? { id: 'saldo', label: 'Saldo a favor', discountPct: 0 };
   const saved = order.payments ?? [];
@@ -188,7 +188,10 @@ export default function PaymentBox({
   }
 
   const choice = order.discountChoice;
-  const cuitNoIva = order.wantsInvoice && String(order.customer?.docNumber ?? '').replace(/\D/g, '').length === 11 && !order.customer?.afipResponsibility;
+  const cuitNoIva = String(order.customer?.docNumber ?? '').replace(/\D/g, '').length === 11 && !order.customer?.afipResponsibility;
+  // Con o sin factura se elige al confirmar (dos botones). Un reintento sigue con lo elegido.
+  const canInvoice = canConfirm && order.status !== 'error' && invoicesOk && !directorio && (!exchange || hasNewLines);
+  const noun = CONFIRM_NOUN[order.kind] ?? 'venta';
   return (
     <aside className={styles.payBox} aria-label="Cobro">
       <div className={styles.payBody}>
@@ -295,17 +298,8 @@ export default function PaymentBox({
             </section>
             </>)}
 
-            {(!exchange || hasNewLines) && !directorio && (
-              <section className={styles.paySection}>
-                <label className={`${styles.switch} ${!invoicesOk ? styles.switchOff : ''}`}>
-                  <input type="checkbox" role="switch" checked={Boolean(order.wantsInvoice) && invoicesOk} disabled={disabled || !invoicesOk} onChange={(e) => onPatch({ wantsInvoice: e.target.checked })} />
-                  <span>¿Quiere factura?</span>
-                </label>
-                {!invoicesOk && <p className={styles.hint}>Este local todavía no factura desde el sistema</p>}
-                {invoiceHint && invoicesOk && <p className={styles.hint}>Hace falta factura para aplicar la nota de crédito</p>}
-                {cuitNoIva && <Notice kind="info">Buscá el CUIT en ARCA para saber si es A o B</Notice>}
-              </section>
-            )}
+            {canInvoice && cuitNoIva && <Notice kind="info">Para facturar a un CUIT buscalo en ARCA (A o B)</Notice>}
+            {(!exchange || hasNewLines) && !directorio && !invoicesOk && <p className={styles.hint}>Este local todavía no factura desde el sistema</p>}
           </>
         ) : (
           <section className={styles.paySection}>
@@ -372,9 +366,21 @@ export default function PaymentBox({
         )}
         {canConfirm && (
           <>
-            <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={onConfirm}>
-              {confirming ? 'Confirmando en Odoo…' : order.status === 'error' ? 'Reintentar confirmación' : `Confirmar ${CONFIRM_NOUN[order.kind] ?? 'venta'}`}
-            </button>
+            {canInvoice ? (
+              <div className={styles.confirmPair}>
+                <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(true)}>
+                  {confirming && confirmingWith === true ? 'Confirmando en Odoo…' : `Confirmar ${noun} con factura`}
+                </button>
+                <button type="button" className="btn btn-secondary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(false)}>
+                  {confirming && confirmingWith === false ? 'Confirmando en Odoo…' : `Confirmar ${noun} sin factura`}
+                </button>
+                {invoiceHint && <p className={styles.hint}>La compra que vuelve tenía factura: conviene con factura, para aplicar la nota de crédito</p>}
+              </div>
+            ) : (
+              <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(order.status === 'error' ? undefined : false)}>
+                {confirming ? 'Confirmando en Odoo…' : order.status === 'error' ? 'Reintentar confirmación' : `Confirmar ${noun}`}
+              </button>
+            )}
             {!confirming && allBlockers.length > 0 && (
               <ul className={styles.blockers} aria-label="Falta para confirmar">
                 {allBlockers.map((b) => <li key={b}>{b}</li>)}
