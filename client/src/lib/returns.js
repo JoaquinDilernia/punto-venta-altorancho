@@ -23,11 +23,25 @@ export function roughNet(newLines, returnLines) {
   return Math.round((goods - returnTotal(returnLines)) * 100) / 100;
 }
 
-export function shortDate(value) {
-  // Odoo manda "YYYY-MM-DD HH:MM:SS" en UTC sin zona: se le agrega la Z.
+// Odoo manda "YYYY-MM-DD HH:MM:SS" en UTC sin zona: se le agrega la Z.
+function parseDate(value) {
   const s = String(value);
   const odoo = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(s);
-  const d = new Date(odoo ? `${s.replace(' ', 'T')}Z` : s);
+  return new Date(odoo ? `${s.replace(' ', 'T')}Z` : s);
+}
+
+// Plazo de devolución (mismo cálculo que el backend, posReturns.lateInfo):
+// pasado, se devuelve igual pero queda "fuera de plazo".
+export const DEFAULT_RETURN_WINDOW_DAYS = 30;
+export function lateInfo(date, windowDays = DEFAULT_RETURN_WINDOW_DAYS, now = Date.now()) {
+  const t = date ? parseDate(date).getTime() : NaN;
+  if (Number.isNaN(t)) return { late: false, days: null };
+  const days = Math.floor((now - t) / 86400000);
+  return { late: days > windowDays, days };
+}
+
+export function shortDate(value) {
+  const d = parseDate(value);
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 

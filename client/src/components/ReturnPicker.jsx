@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import { formatMoney } from '../lib/labels.js';
-import { SOURCE_LABELS, maxReturnable, defaultDestination, shortDate } from '../lib/returns.js';
+import { SOURCE_LABELS, maxReturnable, defaultDestination, shortDate, lateInfo } from '../lib/returns.js';
 import { Notice, EmptyState } from './ui.jsx';
 import ProductSearch from './ProductSearch.jsx';
 import styles from './ReturnPicker.module.css';
@@ -18,11 +18,18 @@ function searchErrorText(raw) {
   return `No se pudo buscar en ${SOURCE_LABELS[source] ?? source}: ${text.slice(i + 2)}`;
 }
 
+// Aviso de compra fuera del plazo de devolución: se puede devolver igual.
+function lateText(date, windowDays) {
+  const { late, days } = lateInfo(date, windowDays);
+  return late ? `Fuera de plazo: la compra es de hace ${days} días (el plazo es de ${windowDays}). Se puede devolver igual y queda registrada como fuera de plazo.` : '';
+}
+
 // Hoja de "Devolver": cantidad, destino, motivo y valor de la línea.
 function ReturnSheet({ line, config, locale, dialog, error, saving, onConfirm, onCancel }) {
   const manual = line.source === 'manual';
   const cap = manual ? Infinity : maxReturnable(line);
   const reasons = config?.settings?.returnReasons ?? [];
+  const late = manual ? '' : lateText(line.purchaseDate, config?.settings?.returnWindowDays ?? 30);
   const destinations = locale?.returnDestinations ?? [];
   const [qty, setQty] = useState(1);
   const [destinationId, setDestinationId] = useState(() => defaultDestination(locale));
@@ -70,6 +77,7 @@ function ReturnSheet({ line, config, locale, dialog, error, saving, onConfirm, o
         </div>
         <p className={styles.total}><span>Valor</span><span className="num">{formatMoney(qty * line.unitValue)}</span></p>
         {manual && <p className={styles.hint}>Valor: precio de lista actual</p>}
+        <Notice kind="warning">{late}</Notice>
         <Notice kind="error">{error}</Notice>
         <div className={styles.actions}>
           <button type="button" className="btn btn-secondary btn-lg" onClick={onCancel}>Cancelar</button>
@@ -83,6 +91,7 @@ function ReturnSheet({ line, config, locale, dialog, error, saving, onConfirm, o
 // `onPick(purchase, purchaseLine, values)`; `variant`: 'sheet' (celular) o 'dialog'.
 export default function ReturnPicker({ config, localId, busy, onPick, onClose, variant = 'sheet' }) {
   const locale = (config?.locales ?? []).find((l) => l.id === localId);
+  const windowDays = config?.settings?.returnWindowDays ?? 30;
   const [mode, setMode] = useState('search'); // search | purchase | manual
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
@@ -209,6 +218,7 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
                     <button type="button" className={styles.item} disabled={loading} onClick={() => openPurchase(p)}>
                       <span className={styles.itemTop}><span>{SOURCE_LABELS[p.source] ?? p.source} {p.label}</span><span className="num">{formatMoney(p.total)}</span></span>
                       <span className={styles.meta}>{shortDate(p.date)} · {p.partnerName}{p.invoiceName ? ` · Factura ${p.invoiceName}` : ''}</span>
+                      {lateInfo(p.date, windowDays).late && <span className={styles.lateTag}>Fuera de plazo · {lateInfo(p.date, windowDays).days} días</span>}
                     </button>
                   </li>
                 ))}
@@ -221,6 +231,7 @@ export default function ReturnPicker({ config, localId, busy, onPick, onClose, v
           <>
             <button type="button" className="btn btn-ghost" onClick={back}>← Volver a la búsqueda</button>
             <p className={styles.meta}>{SOURCE_LABELS[purchase.source] ?? purchase.source} · {shortDate(purchase.date)} · {purchase.partnerName}</p>
+            <Notice kind="warning">{lateText(purchase.date, windowDays)}</Notice>
             {purchase.pending?.length > 0 && (
               <Notice kind="info">
                 Todavía no se entregó: {purchase.pending.map((p) => `${p.qty} × ${p.name}`).join(', ')} — eso se anula, no se devuelve.

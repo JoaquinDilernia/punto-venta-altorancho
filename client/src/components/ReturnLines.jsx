@@ -50,6 +50,7 @@ export default function ReturnLines({ lines, destinations = [], busy, readOnly =
                 <p className={styles.gray}>
                   {rl.sku} · {SOURCE_LABELS[rl.source] ?? rl.source}{rl.purchaseLabel || rl.purchaseId ? ` ${rl.purchaseLabel ?? rl.purchaseId}` : ''}
                 </p>
+                {rl.late && <span className={styles.lateTag}>Fuera de plazo{rl.daysSincePurchase != null ? ` · compra de hace ${rl.daysSincePurchase} días` : ''}</span>}
               </div>
               <p className={`${styles.negative} num`}>− {formatMoney(rl.qty * rl.unitValue)}</p>
             </div>

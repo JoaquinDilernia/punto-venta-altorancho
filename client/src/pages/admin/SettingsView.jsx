@@ -27,6 +27,7 @@ function toForm(s) {
     creditValidityDays: s.creditValidityDays == null ? '' : String(s.creditValidityDays),
     returnReasons: (s.returnReasons ?? []).join('\n'),
     returnSearchDays: String(s.returnSearchDays ?? 90),
+    returnWindowDays: String(s.returnWindowDays ?? 30),
     creditOdooPaymentName: s.creditOdooPaymentName ?? '',
   };
 }
@@ -79,6 +80,12 @@ export default function SettingsView() {
       setError('Los días hacia atrás para buscar compras tienen que ser un número entero entre 1 y 1095');
       return;
     }
+    const windowDays = Number(form.returnWindowDays.trim());
+    if (!(Number.isInteger(windowDays) && windowDays >= 1 && windowDays <= 3650)) {
+      setSaving(false);
+      setError('El plazo de devolución tiene que ser un número entero de días entre 1 y 3650');
+      return;
+    }
     try {
       // Se manda el documento entero: el backend lo reemplaza.
       const result = await api('/admin/settings', {
@@ -100,6 +107,7 @@ export default function SettingsView() {
           creditValidityDays: validityDays,
           returnReasons: reasons,
           returnSearchDays: searchDays,
+          returnWindowDays: windowDays,
           creditOdooPaymentName: form.creditOdooPaymentName.trim() || null,
         },
       });
@@ -180,6 +188,11 @@ export default function SettingsView() {
             <label className="field">
               <span className="field-label">Días hacia atrás para buscar compras *</span>
               <input className="input num" inputMode="numeric" value={form.returnSearchDays} onChange={(e) => set('returnSearchDays')(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">Plazo de devolución (días) *</span>
+              <input className="input num" inputMode="numeric" value={form.returnWindowDays} onChange={(e) => set('returnWindowDays')(e.target.value)} />
+              <span className={styles.hint}>Pasado el plazo se devuelve igual, con aviso, y cuenta como fuera de plazo en las estadísticas.</span>
             </label>
             <label className={`field ${styles.span2}`}>
               <span className="field-label">Motivos de devolución (uno por línea) *</span>

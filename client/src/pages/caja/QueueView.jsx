@@ -47,6 +47,7 @@ export default function QueueView({ queue, loaded, error, onRefresh, onOpen }) {
                   <span className={`${styles.queueNumber} num`}>{o.number}</span>
                   <KindTag kind={o.kind} />
                   {o.priceList && o.priceList !== 'normal' && <span className={styles.kindTag}>{PRICE_LIST_LABELS[o.priceList] ?? o.priceList}</span>}
+                  {o.lateReturn && <span className={`${styles.kindTag} ${styles.kindTagReturn}`}>Fuera de plazo</span>}
                 </span>
                 <span className={styles.queueMain}>
                   <strong>{o.customer?.name ?? 'Sin cliente'}</strong>

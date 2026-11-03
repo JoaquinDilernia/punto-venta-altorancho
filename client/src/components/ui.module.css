@@ -116,6 +116,7 @@
 .notice > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .notice-error { background: var(--removed-bg); border-color: rgba(180, 35, 24, 0.22); color: var(--removed); }
 .notice-success { background: var(--done-bg); border-color: rgba(22, 121, 74, 0.22); color: var(--done); }
+.notice-warning { background: var(--pending-bg); border-color: rgba(143, 84, 0, 0.24); color: var(--pending); }
 .notice-info { background: var(--wash); border-color: var(--line); color: var(--ink-2); font-weight: 400; }
 .noticeIcon { flex-shrink: 0; margin-top: 1px; }
 .noticeClose { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -8px -4px 0; border: none; border-radius: var(--r-sm); background: none; color: inherit; font-size: var(--fs-lg); line-height: 1; }

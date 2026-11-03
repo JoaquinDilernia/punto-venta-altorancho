@@ -353,6 +353,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           <h1 className={`${styles.viewTitle} num`}>{exchange ? KIND_LABELS[order.kind] ?? 'Operación' : 'Pedido'} {order.number}</h1>
           <KindTag kind={order.kind} />
           {priceList !== 'normal' && <Chip tone="sent" large>Lista {PRICE_LIST_LABELS[priceList] ?? priceList}</Chip>}
+          {order.lateReturn && <Chip tone="pending" large>Fuera de plazo</Chip>}
           <OrderStatusChip status={status} large />
           <span className={styles.muted}>
             {order.sellerName} · enviado {formatDateTime(order.sentAt ?? order.createdAt)}
@@ -388,6 +389,9 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           {order.invoiceError && <p className={styles.resultError}>No se pudo facturar: {order.invoiceError}</p>}
           {order.warning && <p className={styles.resultWarning} role="alert">{order.warning}</p>}
         </section>
+      )}
+      {order.lateReturn && status !== 'confirmado' && status !== 'anulado' && (
+        <Notice kind="warning">Devolución fuera de plazo: la compra pasó el plazo de devolución. Se puede hacer igual y queda registrada como fuera de plazo.</Notice>
       )}
       {status === 'error' && (
         <section className={styles.errorBox} role="alert">
