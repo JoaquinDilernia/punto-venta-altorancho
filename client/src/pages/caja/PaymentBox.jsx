@@ -8,6 +8,7 @@ import styles from './caja.module.css';
 
 const SPLIT_WARNING = 'Con pago dividido se aplica el menor descuento de los medios elegidos';
 const CONFIRM_NOUN = { venta: 'venta', cambio: 'cambio', devolucion: 'devolución' };
+const CASH_ONLY_METHOD = 'efectivo';
 
 const keyOf = (payments) => JSON.stringify((payments ?? []).map((p) => [p.methodId, p.detailId ?? null, p.amount ?? null]));
 const pct = (n) => `${String(n).replace('.', ',')} %`;
@@ -192,6 +193,9 @@ export default function PaymentBox({
   // Con o sin factura se elige al confirmar (dos botones). Un reintento sigue con lo elegido.
   const canInvoice = canConfirm && order.status !== 'error' && invoicesOk && !directorio && (!exchange || hasNewLines);
   const noun = CONFIRM_NOUN[order.kind] ?? 'venta';
+  // Sin factura se cobra solo en efectivo (el servidor también lo valida).
+  const cashOnly = noPayment || (saved.length > 0 && saved.every((p) => p.methodId === CASH_ONLY_METHOD));
+  const noInvoiceBlocked = !cashOnly && !directorio;
   return (
     <aside className={styles.payBox} aria-label="Cobro">
       <div className={styles.payBody}>
@@ -371,9 +375,10 @@ export default function PaymentBox({
                 <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(true)}>
                   {confirming && confirmingWith === true ? 'Confirmando en Odoo…' : `Confirmar ${noun} con factura`}
                 </button>
-                <button type="button" className="btn btn-secondary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(false)}>
+                <button type="button" className="btn btn-secondary btn-lg btn-block" disabled={confirmDisabled || noInvoiceBlocked} onClick={() => onConfirm(false)}>
                   {confirming && confirmingWith === false ? 'Confirmando en Odoo…' : `Confirmar ${noun} sin factura`}
                 </button>
+                {noInvoiceBlocked && <p className={styles.hint}>Sin factura: solo con efectivo</p>}
                 {invoiceHint && <p className={styles.hint}>La compra que vuelve tenía factura: conviene con factura, para aplicar la nota de crédito</p>}
               </div>
             ) : (
