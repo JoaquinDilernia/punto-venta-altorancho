@@ -215,7 +215,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   // Con el plan de devolución guardado lo que vuelve ya no se toca (backend).
   const returnsEditable = editable && !order?.returnSteps?.plan;
   const net = preview?.totals?.net ?? null;
-  // La compra que vuelve tenía factura y hay algo nuevo: la NC se aplica a la factura nueva.
+  // La compra que vuelve tenía factura y hay algo nuevo: lo que paga de diferencia se factura.
   const invoiceHint = exchange && lines.length > 0 && returnLines.some((l) => l.invoiceId);
   const methodById = useMemo(() => new Map([
     ...(config.paymentMethods ?? []).map((m) => [m.id, m]),
