@@ -21,7 +21,7 @@
 .cartTabOn .cartCount { background: rgba(255, 255, 255, 0.2); color: var(--paper); }
 
 /* Una columna en celular; el espacio de abajo es para la barra fija. */
-.main { display: flex; flex-direction: column; gap: var(--s-6); padding: var(--s-4) var(--s-4) calc(120px + env(safe-area-inset-bottom)); max-width: 1280px; margin: 0 auto; }
+.main { display: flex; flex-direction: column; gap: var(--s-6); padding: var(--s-4) var(--s-4) calc(150px + env(safe-area-inset-bottom)); max-width: 1280px; margin: 0 auto; }
 .searchCol, .cartCol { min-width: 0; }
 .cartCol { display: flex; flex-direction: column; gap: var(--s-3); }
 .cartHead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
@@ -62,8 +62,26 @@
 }
 .bar > div { min-width: 0; }
 .bar > :global(.btn) { flex-shrink: 0; }
-.barLabel { font-size: var(--fs-xs); color: var(--ink-3); }
-.barTotal { font-size: var(--fs-xl); font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+/* Total a pagar: lo más visible de la barra. En un cambio se pinta según
+   quién paga (el texto siempre lo dice: el color no es la única señal). */
+.barAmount { flex: 1 1 auto; padding: var(--s-2) var(--s-3); border-radius: var(--r-md); }
+.barKicker { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.barTotal { font-size: clamp(26px, 7.5vw, var(--fs-3xl)); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; white-space: nowrap; }
+.barSub { font-size: var(--fs-xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barPays { background: var(--pending-bg); }
+.barPays .barKicker, .barPays .barTotal { color: var(--pending); }
+.barFavor { background: var(--done-bg); }
+.barFavor .barKicker, .barFavor .barTotal { color: var(--done); }
+.barEven { background: var(--wash-2); }
+/* Celular: el total ocupa todo el ancho y "Enviar a caja" queda abajo, al alcance del pulgar. */
+@media (max-width: 600px) {
+  .main { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
+  .bar { flex-wrap: wrap; gap: var(--s-2); }
+  .barAmount { flex-basis: 100%; }
+  .bar > :global(.btn) { flex: 1 1 100%; }
+  .barTotal { font-size: clamp(28px, 9vw, var(--fs-3xl)); }
+  .barSub { white-space: normal; }
+}
 
 /* Hoja inferior (modal): título arriba, contenido que scrollea y botones
    siempre a la vista abajo. */
@@ -86,7 +104,7 @@
   .who { flex: 0 1 auto; max-width: 220px; }
   .carts { flex: 1 1 auto; margin: 0; padding: 0; }
   .stripActions { flex: 0 0 auto; }
-  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); align-items: start; gap: var(--s-6); padding: var(--s-6) var(--s-6) calc(120px + env(safe-area-inset-bottom)); }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); align-items: start; gap: var(--s-6); padding: var(--s-6) var(--s-6) calc(150px + env(safe-area-inset-bottom)); }
   .cartCol { position: sticky; top: 76px; max-height: calc(100dvh - 200px); overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 6px; }
   .backdrop { align-items: center; padding: var(--s-4); }
   .sheet { border-radius: var(--r-lg); animation: pop-in var(--t-med) var(--ease-out); }

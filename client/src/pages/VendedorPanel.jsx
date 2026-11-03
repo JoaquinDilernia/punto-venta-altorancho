@@ -416,15 +416,16 @@ export default function VendedorPanel() {
 
       <footer className={styles.bar}>
         {exchange ? (
-          <div>
-            <p className={styles.barLabel}>{net >= 0 ? 'Paga' : 'A favor del cliente'}</p>
+          <div className={`${styles.barAmount} ${net > 0 ? styles.barPays : net < 0 ? styles.barFavor : styles.barEven}`}>
+            <p className={styles.barKicker}>{net > 0 ? 'El cliente paga' : net < 0 ? 'A favor del cliente' : 'Sin diferencia'}</p>
             <p className={`${styles.barTotal} num`}>{formatMoney(Math.abs(net))}</p>
-            <p className={styles.barLabel}>Aproximado: caja aplica los descuentos</p>
+            <p className={`${styles.barSub} num`}>Se lleva {formatMoney(total)} − vuelve {formatMoney(total - net)} · aprox., caja aplica descuentos</p>
           </div>
         ) : (
-          <div>
-            <p className={styles.barLabel}>{directorio ? 'Total al costo · no se cobra' : 'Total productos'}</p>
+          <div className={styles.barAmount}>
+            <p className={styles.barKicker}>{directorio ? 'Total al costo · no se cobra' : 'Total a pagar'}</p>
             <p className={`${styles.barTotal} num`}>{formatMoney(total)}</p>
+            {!directorio && lines.length > 0 && <p className={styles.barSub}>Antes de descuentos por medio de pago</p>}
           </div>
         )}
         <button type="button" className="btn btn-primary btn-lg" disabled={busy || !cart || (lines.length === 0 && !exchange)} onClick={submit}>
