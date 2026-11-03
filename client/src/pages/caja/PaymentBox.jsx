@@ -203,7 +203,7 @@ export default function PaymentBox({
           <>
             {directorio && (
               <section className={styles.paySection}>
-                <Notice kind="info">Venta a Directorio: al costo, no se cobra ahora y no se factura. Se confirma en Odoo y sale el stock.</Notice>
+                <Notice kind="info">Venta a Directorio: al costo y no se cobra ahora. Se registra como venta interna (sin ARCA) a cobrar, y sale el stock.</Notice>
               </section>
             )}
             {noPayment && !directorio && (children ?? (
@@ -325,7 +325,7 @@ export default function PaymentBox({
               <p className={styles.payLine}><span>Saldo a favor generado</span><strong className="num">{formatMoney(order.refund.credit)}</strong></p>
             )}
             {extra && <p className={styles.autoNote}>Descuento extra: {extra.name}</p>}
-            <p className={styles.hint}>{order.wantsInvoice ? 'Con factura' : 'Sin factura'}</p>
+            <p className={styles.hint}>{order.invoiceMode === 'internal' ? 'Venta interna (sin factura)' : order.wantsInvoice ? 'Con factura' : 'Sin factura'}</p>
           </section>
         )}
 

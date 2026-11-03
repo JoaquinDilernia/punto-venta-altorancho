@@ -42,7 +42,7 @@ export default function LocalesView() {
     setEditing({
       id: l.id, name: l.name ?? '', address: l.address ?? '', warehouseId: l.warehouseId ?? null,
       stockLocationId: l.stockLocationId ?? null, exhibicionLocationId: l.exhibicionLocationId ?? null,
-      teamId: l.teamId ?? null, invoiceJournalId: l.invoiceJournalId ?? null, cashJournalId: l.cashJournalId ?? null, active: l.active !== false,
+      teamId: l.teamId ?? null, invoiceJournalId: l.invoiceJournalId ?? null, cashJournalId: l.cashJournalId ?? null, internalCashJournalId: l.internalCashJournalId ?? null, active: l.active !== false,
       returnDestinations: (l.returnDestinations ?? []).map((d) => ({ ...d, transferToLocationId: d.transferToLocationId ?? null })),
       returnPickingTypeId: l.returnPickingTypeId == null ? '' : String(l.returnPickingTypeId),
       internalPickingTypeId: l.internalPickingTypeId == null ? '' : String(l.internalPickingTypeId),
@@ -59,7 +59,7 @@ export default function LocalesView() {
   const loadUsual = () => setEditing((f) => ({ ...f, returnDestinations: usualDestinations(f) }));
 
   async function save() {
-    const { id, name, address, warehouseId, stockLocationId, exhibicionLocationId, teamId, invoiceJournalId, cashJournalId, active } = editing;
+    const { id, name, address, warehouseId, stockLocationId, exhibicionLocationId, teamId, invoiceJournalId, cashJournalId, internalCashJournalId, active } = editing;
     // Se manda el local entero: el backend lo reemplaza.
     const taken = new Set(editing.returnDestinations.map((d) => d.id).filter(Boolean));
     const returnDestinations = editing.returnDestinations.map((d) => {
@@ -72,7 +72,7 @@ export default function LocalesView() {
     try {
       await api(`/admin/locales/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        body: { name: name.trim(), address: address.trim(), warehouseId, stockLocationId, exhibicionLocationId, teamId, invoiceJournalId, cashJournalId, active,
+        body: { name: name.trim(), address: address.trim(), warehouseId, stockLocationId, exhibicionLocationId, teamId, invoiceJournalId, cashJournalId, internalCashJournalId, active,
           returnDestinations, returnPickingTypeId: numOrNull(editing.returnPickingTypeId), internalPickingTypeId: numOrNull(editing.internalPickingTypeId),
         },
       });
@@ -134,6 +134,7 @@ export default function LocalesView() {
               <OdooSelect label="Equipo de ventas" required options={opts.teams} value={editing.teamId} onChange={set('teamId')} />
               <OdooSelect label="Diario de facturas" options={opts.journals} value={editing.invoiceJournalId} onChange={set('invoiceJournalId')} empty="Sin facturación" />
               <OdooSelect label="Caja del local (cobros en efectivo)" options={opts.paymentJournals ?? []} value={editing.cashJournalId} onChange={set('cashJournalId')} empty="Sin caja" />
+              <OdooSelect label="Caja interna (ventas sin factura)" options={opts.paymentJournals ?? []} value={editing.internalCashJournalId} onChange={set('internalCashJournalId')} empty="Sin caja interna" />
             </>
           )}
           <h3 className={styles.cardTitle}>Destinos de devolución</h3>

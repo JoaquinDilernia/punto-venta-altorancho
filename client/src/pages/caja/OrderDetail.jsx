@@ -350,7 +350,10 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   const notesDirty = notes !== (order.notes ?? '');
   // Un cambio o devolución confirmado no se anula (el servidor lo rechaza).
   const canAnnul = (status === 'confirmado' && !exchange) || (['pendiente', 'error'].includes(status) && !inOdoo);
-  const canRetryInvoice = status === 'confirmado' && order.wantsInvoice && !order.invoiceName && Boolean(order.invoiceError) && locale?.invoices !== false;
+  // Venta interna (VINTE) no depende de que el local facture en ARCA.
+  const internal = order.invoiceMode === 'internal';
+  const canRetryInvoice = status === 'confirmado' && !order.invoiceName && Boolean(order.invoiceError)
+    && (internal || (order.wantsInvoice && locale?.invoices !== false));
 
   return (
     <div className={styles.detail}>
@@ -388,8 +391,8 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           <p className={`${styles.resultOdoo} num`}>{order.odooOrderName || '—'}</p>
           <p className={styles.resultLine}>
             {order.invoiceName
-              ? <>Factura <strong>{order.invoiceName}</strong></>
-              : directorio ? 'Directorio: al costo, sin cobro y sin factura'
+              ? <>{internal ? 'Venta interna' : 'Factura'} <strong>{order.invoiceName}</strong>{directorio ? ' · Directorio, a cobrar' : ''}</>
+              : internal ? 'Venta interna: todavía sin emitir'
                 : order.wantsInvoice ? 'Con factura: todavía sin emitir' : 'Sin factura'}
           </p>
           {order.webTransfer && <p className={styles.resultLine}>Traslado web → Rolón <strong className="num">{order.webTransfer.name}</strong></p>}

@@ -22,6 +22,7 @@ function toForm(s) {
     decoradoraDiscountPct: String(s.decoradoraDiscountPct ?? 5).replace('.', ','),
     directorioPricelistId: s.directorioPricelistId ?? null,
     directorioTagId: s.directorioTagId ?? null,
+    internalInvoiceJournalId: s.internalInvoiceJournalId ?? null,
     homeServiceSku: s.homeServiceSku ?? 'SERVIDOM',
     homeServiceDefaultAmount: String(s.homeServiceDefaultAmount ?? 5000).replace('.', ','),
     creditValidityDays: s.creditValidityDays == null ? '' : String(s.creditValidityDays),
@@ -102,6 +103,7 @@ export default function SettingsView() {
           decoradoraDiscountPct: decoPct,
           directorioPricelistId: form.directorioPricelistId,
           directorioTagId: form.directorioTagId,
+          internalInvoiceJournalId: form.internalInvoiceJournalId,
           homeServiceSku: form.homeServiceSku.trim(),
           homeServiceDefaultAmount: homeAmount.value,
           creditValidityDays: validityDays,
@@ -159,6 +161,7 @@ export default function SettingsView() {
             <span />
             <OdooSelect label="Lista Directorio en Odoo" options={opts.pricelists} value={form.directorioPricelistId} onChange={set('directorioPricelistId')} empty="Usar la de pedidos" />
             <OdooSelect label="Etiqueta de Directorio" options={opts.tags} value={form.directorioTagId} onChange={set('directorioTagId')} empty="Sin etiqueta" />
+            <OdooSelect label="Diario de ventas internas (sin factura)" options={opts.journals} value={form.internalInvoiceJournalId} onChange={set('internalInvoiceJournalId')} empty="No registrar ventas internas" />
           </div>
           <p className={styles.hint}>Cada lista es solo para clientes con su etiqueta en Odoo. Directorio se vende al costo + IVA, no se cobra en el momento y no se factura.</p>
 
