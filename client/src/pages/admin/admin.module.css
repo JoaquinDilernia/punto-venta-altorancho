@@ -82,3 +82,9 @@
   .detailRow { grid-template-columns: minmax(0, 1fr); }
 }
 @media (pointer: coarse) { .filter { min-height: 44px; } }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .check { min-height: 32px; }
+  .filter { min-height: 28px; padding: 0 var(--s-3); }
+}

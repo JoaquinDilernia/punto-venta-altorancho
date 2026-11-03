@@ -122,3 +122,10 @@
 .block { display: flex; flex-direction: column; gap: var(--s-2); }
 .blockTitle { font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
 .blockHint { font-size: var(--fs-sm); color: var(--ink-3); }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .cartTab { min-height: 32px; padding: 0 var(--s-3); }
+  .qty :global(.btn) { width: 32px; font-size: 16px; }
+  .barTotal { font-size: 26px; }
+}

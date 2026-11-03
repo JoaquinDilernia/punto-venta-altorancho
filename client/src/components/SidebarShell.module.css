@@ -82,3 +82,12 @@
   .item { min-height: 48px; }
   .content { padding: var(--s-5) var(--s-4) var(--s-12); }
 }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .shell { grid-template-columns: 196px minmax(0, 1fr); }
+  .logo { height: 22px; }
+  .panel { font-size: 15px; }
+  .item { min-height: 32px; padding: 5px 10px; }
+  .avatar { width: 26px; height: 26px; }
+}

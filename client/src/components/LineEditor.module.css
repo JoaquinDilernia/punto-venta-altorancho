@@ -19,3 +19,10 @@
 .optionOff { opacity: 0.45; cursor: not-allowed; border-style: dashed; }
 .avail { margin-left: auto; min-width: 28px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--done-bg); color: var(--done); font-size: var(--fs-sm); font-weight: 600; text-align: center; }
 .availNone { background: var(--wash-2); color: var(--ink-3); }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .stepper :global(.btn) { font-size: 18px; }
+  .stepper input { font-size: 16px; }
+  .option { min-height: 38px; padding: 4px var(--s-3); }
+}

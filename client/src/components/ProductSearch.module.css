@@ -27,3 +27,8 @@
   .item { grid-template-columns: 80px minmax(0, 1fr) auto; align-items: center; gap: var(--s-4); padding: var(--s-3) var(--s-4); }
   .item > button { grid-column: auto; }
 }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .searchBox > :global(.input) { min-height: 38px; padding-left: 36px; border-radius: var(--r-md); }
+}

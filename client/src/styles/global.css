@@ -193,6 +193,40 @@ input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-o
 }
 
 
+/* ---- Escritorio con mouse (caja, admin) ----
+   Más compacto: con el escalado de Windows (125-150 %) la ventana útil es
+   chica y las medidas táctiles quedaban gigantes. Celular y tablet no cambian. */
+@media (pointer: fine) {
+  :root {
+    --fs-xs: 11px;
+    --fs-sm: 12px;
+    --fs-md: 13px;
+    --fs-lg: 15px;
+    --fs-xl: 18px;
+    --fs-2xl: 22px;
+    --fs-3xl: 28px;
+    --s-3: 10px;
+    --s-4: 12px;
+    --s-5: 14px;
+    --s-6: 18px;
+    --s-8: 24px;
+    --s-10: 30px;
+    --s-12: 36px;
+    --r-md: 10px;
+    --r-lg: 14px;
+  }
+  .btn { min-height: 34px; padding: 0 var(--s-4); }
+  .btn-lg { min-height: 42px; }
+  .btn-sm { min-height: 28px; padding: 0 var(--s-3); }
+  .btn-icon { width: 34px; font-size: 18px; }
+  .btn-icon.btn-sm { width: 28px; }
+  .input, .select { min-height: 34px; }
+  .select-sm, .input-sm { min-height: 28px; }
+  .field { gap: 4px; }
+  .check-row { min-height: 32px; }
+  input[type='checkbox'], input[type='radio'] { width: 16px; height: 16px; }
+}
+
 /* ---- Pantallas táctiles (celular) ----
    iOS hace zoom al enfocar un campo de menos de 16px: en táctil van a 16px.
    Los botones chicos crecen a 44px de alto (el mínimo cómodo para el dedo). */

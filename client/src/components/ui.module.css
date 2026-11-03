@@ -188,3 +188,9 @@
   background: var(--wash);
   color: var(--ink-3);
 }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .header { min-height: 44px; }
+  .brandLogo { height: 22px; }
+}

@@ -6,3 +6,8 @@
 .hint { margin: 0; color: var(--ink-2); font-size: var(--fs-xs); }
 @media (pointer: coarse) { .segmented button { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .segmented button { transition: none; } }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .segmented button { min-height: 28px; }
+}

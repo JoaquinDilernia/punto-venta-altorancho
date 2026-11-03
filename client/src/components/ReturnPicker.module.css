@@ -43,3 +43,9 @@
 .rlControls :global(.select) { width: auto; }
 .fieldError { font-size: var(--fs-sm); color: var(--removed); font-weight: 500; }
 .lateTag { align-self: flex-start; padding: 2px 8px; border-radius: 6px; background: var(--pending-bg); color: var(--pending); font-size: var(--fs-xs); font-weight: 600; }
+
+/* Escritorio con mouse: más compacto (ver global.css). */
+@media (pointer: fine) {
+  .searchRow :global(.input), .input16, .rlControls :global(.select), .rl :global(.input) { font-size: var(--fs-md); }
+  .item { min-height: 36px; }
+}
