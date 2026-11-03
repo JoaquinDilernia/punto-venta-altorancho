@@ -36,6 +36,7 @@ function MethodSelect({ methods, row, onChange, disabled }) {
 // `onPatch(body)` devuelve la respuesta de `GET /orders/:id` posterior o null.
 // En cambios cobra solo `collect` (la diferencia); sin nada para cobrar no pide
 // medio de pago y muestra `children` (p. ej. RefundBox) en su lugar.
+// Directorio: no se cobra en el momento ni se factura (no pide medio de pago).
 // `invoiceHint`: la compra que vuelve tenía factura y hay algo nuevo (para la NC).
 export default function PaymentBox({
   order, preview, config, locale, busy, payError, editable, canConfirm, blockers, confirming, confirmError,
@@ -80,7 +81,8 @@ export default function PaymentBox({
   // Lo que se cobra: en un cambio, solo la diferencia.
   const due = totals ? (totals.collect ?? totals.total) : 0;
   const net = totals?.net ?? due;
-  const noPayment = exchange && Boolean(totals) && due === 0;
+  const directorio = order.priceList === 'directorio';
+  const noPayment = directorio || (exchange && Boolean(totals) && due === 0);
   const extra = preview ? preview.extraDiscount : order.extraDiscount;
   const previewError = preview?.error ?? '';
   const disabled = busy || confirming;
@@ -196,7 +198,12 @@ export default function PaymentBox({
 
         {editable ? (
           <>
-            {noPayment && (children ?? (
+            {directorio && (
+              <section className={styles.paySection}>
+                <Notice kind="info">Venta a Directorio: al costo, no se cobra ahora y no se factura. Se confirma en Odoo y sale el stock.</Notice>
+              </section>
+            )}
+            {noPayment && !directorio && (children ?? (
               <section className={styles.paySection}>
                 <p className={styles.hint}>Lo que vuelve cubre lo nuevo: no hay nada para cobrar ni para devolver.</p>
               </section>
@@ -288,7 +295,7 @@ export default function PaymentBox({
             </section>
             </>)}
 
-            {(!exchange || hasNewLines) && (
+            {(!exchange || hasNewLines) && !directorio && (
               <section className={styles.paySection}>
                 <label className={`${styles.switch} ${!invoicesOk ? styles.switchOff : ''}`}>
                   <input type="checkbox" role="switch" checked={Boolean(order.wantsInvoice) && invoicesOk} disabled={disabled || !invoicesOk} onChange={(e) => onPatch({ wantsInvoice: e.target.checked })} />
@@ -303,7 +310,7 @@ export default function PaymentBox({
         ) : (
           <section className={styles.paySection}>
             <h3 className={styles.sectionLabel}>Medio de pago</h3>
-            {saved.length === 0 && <p className={styles.hint}>{exchange ? 'Sin cobro' : 'Sin datos de pago'}</p>}
+            {saved.length === 0 && <p className={styles.hint}>{directorio ? 'Directorio: no se cobra' : exchange ? 'Sin cobro' : 'Sin datos de pago'}</p>}
             {saved.map((p) => {
               const m = methodById.get(p.methodId);
               const d = m?.details?.find((x) => x.id === p.detailId);
@@ -354,7 +361,7 @@ export default function PaymentBox({
 
       <div className={styles.payFooter}>
         <div className={styles.totalRow}>
-          <span>{exchange ? (net < 0 ? 'A devolver' : 'A cobrar') : 'Total'}</span>
+          <span>{exchange ? (net < 0 ? 'A devolver' : 'A cobrar') : directorio ? 'Total (no se cobra)' : 'Total'}</span>
           <strong className={`${styles.total} num`}>{totals ? formatMoney(exchange ? Math.abs(net) : totals.total) : '—'}</strong>
         </div>
         {confirmError && (

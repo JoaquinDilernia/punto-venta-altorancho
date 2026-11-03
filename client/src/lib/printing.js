@@ -69,6 +69,7 @@ ${order.odooOrderName ? `<p>REF. VENTA: ${esc(order.odooOrderName)}</p>` : ''}${
 <hr class="rule"><table>${rows}</table>
 <hr class="rule"><table>${sums.join('')}</table>
 ${payments && collect > 0 ? `<hr class="rule"><table><tr><th colspan="2">Pagos</th></tr>${payments}</table>` : ''}
+${order.priceList === 'directorio' ? '<hr class="rule"><p class="note">VENTA A DIRECTORIO: AL COSTO, SIN COBRO</p>' : order.priceList === 'decoradora' ? '<p class="note">Lista Decoradora</p>' : ''}
 <hr class="rule"><p class="note">Comprobante no válido como factura</p>
 <hr class="rule">${FOOTER}`);
 }

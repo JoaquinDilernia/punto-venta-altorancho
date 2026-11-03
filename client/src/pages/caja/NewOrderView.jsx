@@ -7,6 +7,8 @@ import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../../components/C
 import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../../components/ShippingFields.jsx';
 import ReturnPicker from '../../components/ReturnPicker.jsx';
 import ReturnLines from '../../components/ReturnLines.jsx';
+import PriceListPicker from '../../components/PriceListPicker.jsx';
+import { priceListOf, priceListTagError } from '../../lib/priceLists.js';
 import { returnBody, holderDocsOf, holderDiffers } from '../../lib/returns.js';
 import { LineDialog, LineRow, activeLinesOf, lineBody } from './lineParts.jsx';
 import styles from './caja.module.css';
@@ -26,6 +28,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [picker, setPicker] = useState(false);
   const [holderReason, setHolderReason] = useState('');
+  const [nextList, setNextList] = useState('normal'); // lista del carrito todavía sin crear
   const closePicker = useCallback(() => setPicker(false), []);
 
   const locales = config.locales ?? [];
@@ -47,6 +50,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
   const lines = activeLinesOf(cart);
   const hasEnvio = lines.some((l) => l.delivery === 'envio');
   const total = lines.reduce((sum, l) => sum + l.basePrice * l.qty, 0);
+  const priceList = cart ? priceListOf(cart) : nextList;
   const returnLines = cart?.returnLines ?? [];
   const exchange = returnLines.length > 0;
   const holderChanged = holderDiffers(returnLines, customer.docNumber);
@@ -70,7 +74,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
     const line = lineBody({ ...v, productId: product.productId });
     const order = cart
       ? await api(`/carts/${cart.id}/lines`, { method: 'POST', body: { line } })
-      : await api('/carts', { method: 'POST', body: scope ? { line, localId: scope } : { line } });
+      : await api('/carts', { method: 'POST', body: scope ? { line, localId: scope, priceList: nextList } : { line, priceList: nextList } });
     setCart(order);
     setNotice('');
     setDialog(null);
@@ -100,6 +104,11 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
   const editReturn = (rl, changes) => op(async () => setCart(await api(`/orders/${cart.id}/return-lines/${rl.rlId}`, { method: 'PATCH', body: changes })));
   const removeReturn = (rl) => op(async () => setCart(await api(`/orders/${cart.id}/return-lines/${rl.rlId}`, { method: 'DELETE' })));
 
+  // Sin carrito queda elegida para el próximo; con carrito, el servidor recalcula los precios.
+  const changeList = (id) => (cart
+    ? op(async () => setCart(await api(`/orders/${cart.id}/price-list`, { method: 'PUT', body: { priceList: id } })))
+    : setNextList(id));
+
   const changeQty = (line, qty) => op(async () => setCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, { method: 'PATCH', body: { qty } })));
   const removeLine = (line) => op(async () => setCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, { method: 'DELETE' })));
 
@@ -108,6 +117,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
     setCustomer(EMPTY_CUSTOMER);
     setShipping(EMPTY_SHIPPING);
     setHolderReason('');
+    setNextList('normal');
     setConfirmDiscard(false);
   }
 
@@ -120,6 +130,8 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
     const errors = [...customerErrors(customer)];
     if (hasEnvio) errors.push(...shippingErrors(shipping));
     if (holderChanged && !holderReason.trim()) errors.push('Escribí el motivo del cambio de titular');
+    const tagError = priceListTagError(priceList, customer, config.settings);
+    if (tagError) errors.push(tagError);
     if (errors.length) { setNotice(errors.join('. ')); return; }
     const body = { customer };
     if (hasEnvio) body.shipping = shippingBody(shipping);
@@ -142,6 +154,15 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
         </div>
 
         <section className={styles.newCart} aria-label="Carrito">
+          {!loading && (
+            <PriceListPicker
+              value={priceList}
+              settings={config.settings}
+              disabled={busy}
+              locked={exchange ? 'Los cambios y devoluciones van con lista Normal' : ''}
+              onChange={changeList}
+            />
+          )}
           <Notice kind="error" onClose={notice ? () => setNotice('') : undefined}>{notice}</Notice>
           {!cart && <EmptyState title="Carrito vacío">Buscá un producto y tocá Agregar, o tocá Agregar lo que vuelve.</EmptyState>}
           {cart && (
@@ -161,13 +182,14 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
                   ))}
                 </ul>
               </section>
-              {lines.length > 0 && <p className={`${styles.cartTotal} num`}>Total productos <strong>{formatMoney(total)}</strong></p>}
+              {lines.length > 0 && <p className={`${styles.cartTotal} num`}>{priceList === 'directorio' ? 'Total al costo · no se cobra' : 'Total productos'} <strong>{formatMoney(total)}</strong></p>}
               {hasEnvio && <ShippingFields value={shipping} onChange={updater(setShipping)} defaultHomeAmount={config.settings?.homeServiceDefaultAmount} />}
               <CustomerForm
                 key={cart.id}
                 value={customer}
                 onChange={updater(setCustomer)}
                 decoradorTagId={config.settings?.decoradorTagId}
+                directorioTagId={config.settings?.directorioTagId}
                 prefillDoc={holderDocsOf(returnLines)[0] ?? ''}
                 showCredit
                 afterDoc={holderChanged && (

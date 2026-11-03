@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { formatMoney } from '../../lib/labels.js';
+import { PRICE_LIST_LABELS } from '../../lib/priceLists.js';
 import { formatTime } from '../../lib/format.js';
 import { EmptyState, Notice, OrderStatusChip } from '../../components/ui.jsx';
 import { KindTag, activeLinesOf } from './lineParts.jsx';
@@ -45,6 +46,7 @@ export default function QueueView({ queue, loaded, error, onRefresh, onOpen }) {
                 <span className={styles.numberCell}>
                   <span className={`${styles.queueNumber} num`}>{o.number}</span>
                   <KindTag kind={o.kind} />
+                  {o.priceList && o.priceList !== 'normal' && <span className={styles.kindTag}>{PRICE_LIST_LABELS[o.priceList] ?? o.priceList}</span>}
                 </span>
                 <span className={styles.queueMain}>
                   <strong>{o.customer?.name ?? 'Sin cliente'}</strong>

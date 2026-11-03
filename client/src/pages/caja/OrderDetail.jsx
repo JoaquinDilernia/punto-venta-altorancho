@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { formatMoney } from '../../lib/labels.js';
 import { formatDateTime } from '../../lib/format.js';
-import { Notice, OrderStatusChip } from '../../components/ui.jsx';
+import { Chip, Notice, OrderStatusChip } from '../../components/ui.jsx';
 import ProductSearch from '../../components/ProductSearch.jsx';
 import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../../components/CustomerForm.jsx';
 import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../../components/ShippingFields.jsx';
 import ReturnLines from '../../components/ReturnLines.jsx';
 import CreditBadge from '../../components/CreditBadge.jsx';
+import PriceListPicker from '../../components/PriceListPicker.jsx';
+import { PRICE_LIST_LABELS, priceListOf, priceListTagError } from '../../lib/priceLists.js';
 import { KIND_LABELS, holderDiffers, holderReasonFromNotes } from '../../lib/returns.js';
 import PaymentBox from './PaymentBox.jsx';
 import RefundBox, { refundCovers } from './RefundBox.jsx';
@@ -208,6 +210,8 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   const needsShipping = lines.some((l) => l.delivery === 'envio');
   const returnLines = order?.returnLines ?? [];
   const exchange = returnLines.length > 0;
+  const priceList = priceListOf(order);
+  const directorio = priceList === 'directorio';
   // Con el plan de devolución guardado lo que vuelve ya no se toca (backend).
   const returnsEditable = editable && !order?.returnSteps?.plan;
   const net = preview?.totals?.net ?? null;
@@ -256,6 +260,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
     await load();
     setDialog(null);
   }
+  const changeList = (id) => mutate(() => api(`/orders/${orderId}/price-list`, { method: 'PUT', body: { priceList: id } }));
   const changeQty = (line, qty) => mutate(() => api(`/orders/${orderId}/lines/${line.lineId}`, { method: 'PATCH', body: { qty } }));
   const removeLine = (line) => mutate(() => api(`/orders/${orderId}/lines/${line.lineId}`, { method: 'DELETE' }));
 
@@ -321,6 +326,8 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   if (customerDirty) blockers.push('Guardá los cambios del cliente');
   if (editable && needsShipping && (shippingDirty || !order.shipping)) blockers.push('Guardá los datos del envío');
   if (editable && !order.customer) blockers.push('Falta cargar el cliente');
+  const tagError = editable && order.customer ? priceListTagError(priceList, order.customer, config.settings) : null;
+  if (tagError) blockers.push(tagError);
   // Cambio de titular: lo que manda es el cliente guardado (lo valida el backend al confirmar).
   const holderNeeded = exchange && holderDiffers(returnLines, order.customer?.docNumber);
   const holderShown = exchange && (holderNeeded || holderDiffers(returnLines, customer.docNumber));
@@ -345,6 +352,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
         <div className={styles.detailTitleRow}>
           <h1 className={`${styles.viewTitle} num`}>{exchange ? KIND_LABELS[order.kind] ?? 'Operación' : 'Pedido'} {order.number}</h1>
           <KindTag kind={order.kind} />
+          {priceList !== 'normal' && <Chip tone="sent" large>Lista {PRICE_LIST_LABELS[priceList] ?? priceList}</Chip>}
           <OrderStatusChip status={status} large />
           <span className={styles.muted}>
             {order.sellerName} · enviado {formatDateTime(order.sentAt ?? order.createdAt)}
@@ -373,7 +381,8 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           <p className={styles.resultLine}>
             {order.invoiceName
               ? <>Factura <strong>{order.invoiceName}</strong></>
-              : order.wantsInvoice ? 'Con factura: todavía sin emitir' : 'Sin factura'}
+              : directorio ? 'Directorio: al costo, sin cobro y sin factura'
+                : order.wantsInvoice ? 'Con factura: todavía sin emitir' : 'Sin factura'}
           </p>
           {order.webTransfer && <p className={styles.resultLine}>Traslado web → Rolón <strong className="num">{order.webTransfer.name}</strong></p>}
           {order.invoiceError && <p className={styles.resultError}>No se pudo facturar: {order.invoiceError}</p>}
@@ -413,6 +422,15 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
           )}
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>{exchange ? 'Se lleva' : 'Productos'}</h2>
+            {editable && (
+              <PriceListPicker
+                value={priceList}
+                settings={config.settings}
+                disabled={busy || confirming}
+                locked={exchange ? 'Los cambios y devoluciones van con lista Normal' : ''}
+                onChange={changeList}
+              />
+            )}
             {exchange && lines.length === 0 && <p className={styles.hint}>No se lleva nada nuevo.</p>}
             <ul className={styles.lines}>
               {lines.map((l) => (
@@ -464,6 +482,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
               value={customer}
               onChange={draftUpdater(setCustomer)}
               decoradorTagId={config.settings?.decoradorTagId}
+              directorioTagId={config.settings?.directorioTagId}
               showCredit
               footer={<SaveButton dirty={customerDirty} disabled={busy || confirming || !customerDirty} onClick={saveCustomer} label="Guardar cliente" />}
             />

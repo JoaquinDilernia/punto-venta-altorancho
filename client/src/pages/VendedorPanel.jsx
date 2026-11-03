@@ -10,6 +10,8 @@ import CustomerForm, { EMPTY_CUSTOMER, customerErrors } from '../components/Cust
 import ShippingFields, { EMPTY_SHIPPING, shippingErrors, shippingBody } from '../components/ShippingFields.jsx';
 import ReturnPicker from '../components/ReturnPicker.jsx';
 import ReturnLines from '../components/ReturnLines.jsx';
+import PriceListPicker from '../components/PriceListPicker.jsx';
+import { priceListOf, priceListTagError } from '../lib/priceLists.js';
 import { returnBody, roughNet, holderDocsOf, holderDiffers } from '../lib/returns.js';
 import styles from './VendedorPanel.module.css';
 
@@ -114,6 +116,7 @@ export default function VendedorPanel() {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [loading, setLoading] = useState(true);
   const [picker, setPicker] = useState(false);
+  const [nextList, setNextList] = useState('normal'); // lista del próximo carrito (todavía sin crear)
 
   useEffect(() => {
     let alive = true;
@@ -140,6 +143,8 @@ export default function VendedorPanel() {
   const lines = activeLinesOf(cart);
   const total = lines.reduce((sum, l) => sum + l.basePrice * l.qty, 0);
   const hasEnvio = lines.some((l) => l.delivery === 'envio');
+  const priceList = cart ? priceListOf(cart) : nextList;
+  const directorio = priceList === 'directorio';
   const returnLines = cart?.returnLines ?? [];
   const exchange = returnLines.length > 0;
   const net = roughNet(lines, returnLines);
@@ -185,7 +190,7 @@ export default function VendedorPanel() {
     const line = lineBody({ ...v, productId: product.productId });
     const order = cart
       ? await api(`/carts/${cart.id}/lines`, { method: 'POST', body: { line } })
-      : await api('/carts', { method: 'POST', body: { line } });
+      : await api('/carts', { method: 'POST', body: { line, priceList: nextList } });
     putCart(order);
     setActiveCartId(order.id);
     setSent('');
@@ -235,6 +240,11 @@ export default function VendedorPanel() {
     putCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, { method: 'PATCH', body: { qty } }));
   });
 
+  // Sin carrito queda elegida para el próximo; con carrito, el servidor recalcula los precios.
+  const changeList = (id) => (cart
+    ? cartOp(async () => putCart(await api(`/orders/${cart.id}/price-list`, { method: 'PUT', body: { priceList: id } })))
+    : setNextList(id));
+
   const removeLine = (line) => cartOp(async () => {
     putCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, { method: 'DELETE' }));
   });
@@ -243,6 +253,7 @@ export default function VendedorPanel() {
     await api(`/carts/${cart.id}`, { method: 'DELETE' });
     setCarts((prev) => prev.filter((c) => c.id !== cart.id));
     setActiveCartId(null);
+    setNextList('normal');
     setConfirmDiscard(false);
   });
 
@@ -250,6 +261,8 @@ export default function VendedorPanel() {
     const errors = [...customerErrors(draft.customer)];
     if (hasEnvio) errors.push(...shippingErrors(draft.shipping));
     if (holderChanged && !holderReason.trim()) errors.push('Escribí el motivo del cambio de titular');
+    const tagError = priceListTagError(priceList, draft.customer, config?.settings);
+    if (tagError) errors.push(tagError);
     if (errors.length) {
       setNotice({ kind: 'error', text: errors.join('. ') });
       return;
@@ -262,12 +275,14 @@ export default function VendedorPanel() {
       const order = await api(`/carts/${cart.id}/submit`, { method: 'POST', body });
       setCarts((prev) => prev.filter((c) => c.id !== cart.id));
       setActiveCartId(null);
+      setNextList('normal');
       setSent(`${order.number ?? cart.number} enviado a caja`);
     }).finally(() => setSubmitting(false));
   }
 
   function selectCart(id) {
     setActiveCartId(id);
+    if (!id) setNextList('normal');
     setConfirmDiscard(false);
     setSent('');
     setNotice({ kind: 'error', text: '' });
@@ -328,6 +343,15 @@ export default function VendedorPanel() {
               <small>Buscá un producto para empezar con el próximo cliente.</small>
             </div>
           )}
+          {config && (
+            <PriceListPicker
+              value={priceList}
+              settings={config.settings}
+              disabled={busy}
+              locked={exchange ? 'Los cambios y devoluciones van con lista Normal' : ''}
+              onChange={changeList}
+            />
+          )}
           <Notice kind={notice.kind} onClose={notice.text ? () => setNotice({ kind: 'error', text: '' }) : undefined}>{notice.text}</Notice>
 
           {!cart && !sent && <EmptyState title="Carrito vacío">Buscá un producto y tocá Agregar, o tocá Cambio / devolución.</EmptyState>}
@@ -356,6 +380,7 @@ export default function VendedorPanel() {
                 value={draft.customer}
                 onChange={draftUpdater(cart.id, 'customer')}
                 decoradorTagId={config?.settings?.decoradorTagId}
+                directorioTagId={config?.settings?.directorioTagId}
                 prefillDoc={holderDoc}
                 showCredit
                 afterDoc={holderChanged && (
@@ -398,7 +423,7 @@ export default function VendedorPanel() {
           </div>
         ) : (
           <div>
-            <p className={styles.barLabel}>Total productos</p>
+            <p className={styles.barLabel}>{directorio ? 'Total al costo · no se cobra' : 'Total productos'}</p>
             <p className={`${styles.barTotal} num`}>{formatMoney(total)}</p>
           </div>
         )}

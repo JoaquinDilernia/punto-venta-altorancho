@@ -32,7 +32,9 @@ export function customerErrors(c) {
 // el de la compra que vuelve. `showCredit`: saldo a favor debajo del documento.
 // `afterDoc`: contenido extra debajo del documento (p. ej. cambio de titular).
 // `footer`: acciones al pie de la tarjeta (p. ej. Guardar cliente).
-export default function CustomerForm({ value, onChange, decoradorTagId, prefillDoc = '', showCredit = false, afterDoc = null, footer = null }) {
+// `decoradorTagId` / `directorioTagId`: etiquetas de Odoo que habilitan las
+// listas Decoradora y Directorio; si el cliente las tiene se ven como chip.
+export default function CustomerForm({ value, onChange, decoradorTagId, directorioTagId, prefillDoc = '', showCredit = false, afterDoc = null, footer = null }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState({ kind: 'info', text: '' });
   const prefilled = useRef('');
@@ -99,7 +101,9 @@ export default function CustomerForm({ value, onChange, decoradorTagId, prefillD
     }
   }
 
-  const isDecorador = decoradorTagId != null && value.tagIds.includes(decoradorTagId);
+  const tagIds = value.tagIds.map(Number);
+  const isDecorador = decoradorTagId != null && tagIds.includes(Number(decoradorTagId));
+  const isDirectorio = directorioTagId != null && tagIds.includes(Number(directorioTagId));
 
   return (
     <fieldset className={styles.form}>
@@ -122,9 +126,10 @@ export default function CustomerForm({ value, onChange, decoradorTagId, prefillD
       {afterDoc}
       <Notice kind={notice.kind}>{notice.text}</Notice>
 
-      {(isDecorador || value.afipResponsibility) && (
+      {(isDecorador || isDirectorio || value.afipResponsibility) && (
         <div className={styles.facts}>
-          {isDecorador && <Chip tone="sent">Decorador/Arquitecto</Chip>}
+          {isDecorador && <Chip tone="sent">Decorador/Arquitecto · lista Decoradora</Chip>}
+          {isDirectorio && <Chip tone="sent">Directorio · lista Directorio</Chip>}
           {value.afipResponsibility && (
             <p className={styles.fact}>
               <span className="field-label">Condición de IVA ({value.fromArca ? 'según ARCA' : 'según Odoo'})</span>

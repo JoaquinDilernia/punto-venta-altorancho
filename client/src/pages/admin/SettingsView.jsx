@@ -18,6 +18,10 @@ function toForm(s) {
     orderPricelistId: s.orderPricelistId ?? null,
     shippingProductSku: s.shippingProductSku ?? '',
     decoradorTagId: s.decoradorTagId ?? null,
+    decoradoraPricelistId: s.decoradoraPricelistId ?? null,
+    decoradoraDiscountPct: String(s.decoradoraDiscountPct ?? 5).replace('.', ','),
+    directorioPricelistId: s.directorioPricelistId ?? null,
+    directorioTagId: s.directorioTagId ?? null,
     homeServiceSku: s.homeServiceSku ?? 'SERVIDOM',
     homeServiceDefaultAmount: String(s.homeServiceDefaultAmount ?? 5000).replace('.', ','),
     creditValidityDays: s.creditValidityDays == null ? '' : String(s.creditValidityDays),
@@ -63,6 +67,12 @@ export default function SettingsView() {
       setError('Los motivos de devolución son entre 1 y 20, de hasta 60 letras cada uno');
       return;
     }
+    const decoPct = Number(form.decoradoraDiscountPct.trim().replace(',', '.'));
+    if (!(form.decoradoraDiscountPct.trim() !== '' && decoPct >= 0 && decoPct < 100)) {
+      setSaving(false);
+      setError('El descuento de la lista Decoradora tiene que estar entre 0 y 99');
+      return;
+    }
     const searchDays = Number(form.returnSearchDays.trim());
     if (!(Number.isInteger(searchDays) && searchDays >= 1 && searchDays <= 1095)) {
       setSaving(false);
@@ -81,6 +91,10 @@ export default function SettingsView() {
           orderPricelistId: form.orderPricelistId,
           shippingProductSku: form.shippingProductSku.trim(),
           decoradorTagId: form.decoradorTagId,
+          decoradoraPricelistId: form.decoradoraPricelistId,
+          decoradoraDiscountPct: decoPct,
+          directorioPricelistId: form.directorioPricelistId,
+          directorioTagId: form.directorioTagId,
           homeServiceSku: form.homeServiceSku.trim(),
           homeServiceDefaultAmount: homeAmount.value,
           creditValidityDays: validityDays,
@@ -125,6 +139,21 @@ export default function SettingsView() {
           <p className={styles.hint}>Debe ser una lista SIN IVA (ej. Lista Minorista): Odoo recibe precios sin IVA.</p>
           <p className={styles.hint}>Las listas cambian de nombre cada mes en Odoo: actualizalas acá cuando cambien.</p>
 
+          <h2 className={styles.cardTitle}>Listas Decoradora y Directorio</h2>
+          <div className={styles.grid2}>
+            <OdooSelect label="Lista Decoradora en Odoo" options={opts.pricelists} value={form.decoradoraPricelistId} onChange={set('decoradoraPricelistId')} empty="Usar la de pedidos" />
+            <label className="field">
+              <span className="field-label">Descuento de la lista Decoradora (%) *</span>
+              <input className="input num" inputMode="decimal" value={form.decoradoraDiscountPct} onChange={(e) => set('decoradoraDiscountPct')(e.target.value)} />
+              <span className={styles.hint}>Sobre el precio de siempre; después se suma el descuento del medio de pago.</span>
+            </label>
+            <OdooSelect label="Etiqueta de decorador" options={opts.tags} value={form.decoradorTagId} onChange={set('decoradorTagId')} empty="Sin etiqueta" />
+            <span />
+            <OdooSelect label="Lista Directorio en Odoo" options={opts.pricelists} value={form.directorioPricelistId} onChange={set('directorioPricelistId')} empty="Usar la de pedidos" />
+            <OdooSelect label="Etiqueta de Directorio" options={opts.tags} value={form.directorioTagId} onChange={set('directorioTagId')} empty="Sin etiqueta" />
+          </div>
+          <p className={styles.hint}>Cada lista es solo para clientes con su etiqueta en Odoo. Directorio se vende al costo + IVA, no se cobra en el momento y no se factura.</p>
+
           <h2 className={styles.cardTitle}>Otros</h2>
           <div className={styles.grid2}>
             <label className="field">
@@ -139,7 +168,6 @@ export default function SettingsView() {
               <span className="field-label">Monto sugerido de subida al domicilio ($, con IVA) *</span>
               <input className="input num" inputMode="decimal" value={form.homeServiceDefaultAmount} onChange={(e) => set('homeServiceDefaultAmount')(e.target.value)} />
             </label>
-            <OdooSelect label="Etiqueta de decorador" options={opts.tags} value={form.decoradorTagId} onChange={set('decoradorTagId')} empty="Sin etiqueta" />
           </div>
 
           <h2 className={styles.cardTitle}>Devoluciones y saldo a favor</h2>
