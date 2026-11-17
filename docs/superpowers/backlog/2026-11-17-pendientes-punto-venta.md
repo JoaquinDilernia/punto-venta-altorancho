@@ -11,11 +11,12 @@ entendí y lo que falta preguntar.
         Local X" o nada si se lo lleva en el momento; en el pedido y en sus
         remitos. Odoo copia la nota del pedido a la factura (Términos y
         condiciones).
-- [ ] **Pedido a fabricar.** Un check en la línea; se agrega al detalle de la
+- [x] **Pedido a fabricar.** Un check en la línea; se agrega al detalle de la
       compra y a Odoo.
-      - A definir: ¿es por línea o por pedido? ¿En Odoo va como nota, como
-        ruta "Fabricar"/"Comprar" o como etiqueta? ¿Afecta el stock (se puede
-        vender sin stock si está marcado)?
+      - Hecho 17/11 (Reportes `3eeb6b9`, front `f1c2b33`): check "A fabricar
+        (entrega a 30 días)" por línea; no puede ser "se lo lleva ahora"; va
+        en la nota de Odoo ("A fabricar (30 días): SKU…") y en el recibo y
+        el ticket de cambio. No cambia el control de stock.
 - [x] **Devolución por falla al depósito de fallas.** Si el motivo de
       devolución es falla, que la mercadería vaya a la ubicación de fallas.
       - Hecho 17/11 (`3414ac1`): con motivo "Falla" se elige solo el destino
@@ -28,10 +29,17 @@ entendí y lo que falta preguntar.
       devuelve". Se tiene que poder devolver igual: cancelar el pick, anular
       la línea / el pedido, que vuelva el stock, y que quede pendiente hasta
       que logística devuelva el stock.
-      - A definir: si el pick ya está en preparación (reservado, separado),
-        ¿se cancela igual? ¿"Pendiente" es un estado en la app que logística
-        cierra, o una transferencia de devolución abierta en Odoo? ¿Va nota de
-        crédito si ya se facturó?
+      - Decidido 17/11: PICK pendiente → se cancela. PICK ya validado → se
+        cancela el OUT y se crea una transferencia de vuelta a stock que
+        queda pendiente (logística la ve y la valida).
+      - Diseño: lo no entregado aparece como línea devolvible (con el id de
+        la línea del pedido); al confirmar se baja la cantidad de la línea
+        del pedido en Odoo (Odoo reduce los movimientos pendientes); si el
+        PICK estaba hecho, transferencia pendiente de la zona de salida al
+        stock del local; NC como en cualquier devolución si estaba facturado.
+      - **Bloqueado:** hay que probar en Odoo cómo reacciona este Odoo (PICK +
+        OUT) al bajar la cantidad, con un pedido de prueba. Necesita
+        autorización para crear ese pedido de prueba.
 - [x] **Devolver a diferentes ubicaciones.** Elegir a qué depósito / ubicación
       vuelve cada línea (relacionado con el de fallas).
       - Ya existía: "Destino" por línea al devolver; la lista se configura
@@ -42,14 +50,17 @@ entendí y lo que falta preguntar.
         de caja y de admin. "Entregado" = todo se entregó en el acto.
       - Confirmado 17/11: "Entregado" es solo lo que se retira en el momento
         en el local. No hace falta leer Odoo.
-- [ ] **Movimiento por usuario / vendedor en Odoo.** Que en Odoo se vea qué
+- [x] **Movimiento por usuario / vendedor en Odoo.** Que en Odoo se vea qué
       usuario o vendedor hizo cada movimiento.
-      - A definir: ¿alcanza con el vendedor en el pedido y en la nota del
-        picking, o hace falta un usuario de Odoo por persona (hoy la app opera
-        con un usuario técnico)?
-- [ ] **Pick por foto.**
-      - A definir: ¿sacar una foto al preparar / entregar como comprobante
-        adjunta al picking? ¿O buscar el producto por foto?
+      - Decidido 17/11: alcanza la nota. Hecho (`3eeb6b9`): "Vendedor: X" en
+        la nota del pedido y de los remitos.
+- [x] **Pick por foto.** Es el buscador del vendedor: leer el código de
+      barras con la cámara y que devuelva el SKU.
+      - Hecho 17/11 (Reportes `8b1df9b`, front `22c0e91`): botón de cámara en
+        el buscador (@zxing/browser, anda en iPhone, Android y PC). Si el
+        código no es el SKU (EAN), el backend lo traduce al SKU. En Odoo
+        4689 de 7111 productos tienen código de barras, casi todos igual al
+        SKU.
 
 ## Venta
 
@@ -66,7 +77,13 @@ entendí y lo que falta preguntar.
         `VINSI` 85, Belgrano `VINBE` 86, Alcorta `VINAL` 87. Precargarlos y
         que se puedan editar en Admin → Locales.
       - Se edita en Admin → Locales; vacío = el general de Ajustes (VINTE).
-- [ ] **Devoluciones y cambios según el diario.**
+- [x] **Devoluciones y cambios según el diario.** Hecho 17/11 (Reportes
+      `e4fdb86`, front `84e0e7d`). RVENTI = la NC de una venta sin factura:
+      en Odoo es la numeración de NC del diario interno (`RVINTE/2026/…`;
+      con los diarios por local sale `RVINSI…`, `RVINBE…`). Compra sin
+      factura → NC interna en el diario del local, sin ARCA. Cambio sin
+      factura → factura interna con la NC aplicada (compensa la cuenta
+      corriente). Compra con factura → el cambio solo con factura.
       - Si la venta original fue **con factura** y en el cambio paga la
         diferencia en efectivo, sigue en el diario con factura.
       - Si la venta original fue **sin factura** y en el cambio paga con
@@ -86,8 +103,12 @@ entendí y lo que falta preguntar.
 
 ## Cajas
 
-- [ ] **Movimientos entre cajas en efectivo.** En cada local, pasar efectivo
+- [x] **Movimientos entre cajas en efectivo.** En cada local, pasar efectivo
       entre la caja con factura y la caja sin factura.
+      - Hecho 17/11 (Reportes `1a21106`, front `48eb875`): movimiento "Entre
+        cajas" en Caja del día (cajero y admin), y el resumen muestra el
+        efectivo con y sin factura. No cambia el efectivo esperado. Falta
+        mandarlo a Odoo: va con la etapa 2 de la propuesta (aprobar caja).
       - Entiendo: en la caja del local, un movimiento "de caja con factura a
         caja sin factura" (y al revés) con monto y motivo, que va a Odoo
         entre las dos cuentas de caja del local.
@@ -114,6 +135,9 @@ entendí y lo que falta preguntar.
       llaman "Caja Interna Las Lomas de San Isidro (copia)". También la caja
       67 de Belgrano ("Caja Las Lomas (copia)") y el diario de facturas 65
       ("Pto. 4 Facturas Las Lomas (copia)").
+- [ ] Activar "secuencia dedicada para notas de crédito" en el diario
+      `VINAL` (87, Ventas Internas Alcorta), como ya tienen VINSI y VINBE,
+      para que sus NC salgan `RVINAL/…`.
 
 ## Dónde está cada cosa
 
