@@ -1,0 +1,265 @@
+<title>Propuesta de cobros y cajas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: una columna de lectura; asientos como libro diario; el circuito como pasos reales en orden */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --fg: #1c231f; --muted: #5b665f; --line: #d8ddd8;
+  --accent: #2c6a4d; --accent-bg: #e6f1eb; --warn: #9c5418; --warn-bg: #fbf0e5; --info-bg: #eaf0f6; --info: #2f5a86;
+  --display: "Fraunces", Georgia, serif; --body: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131715; --surface: #1b201d; --fg: #e3e8e4; --muted: #98a49d; --line: #2e3531;
+  --accent: #7cc4a0; --accent-bg: #1a2a22; --warn: #e6a36b; --warn-bg: #2b2119; --info-bg: #1a2330; --info: #8fb6e0; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #131715; --surface: #1b201d; --fg: #e3e8e4; --muted: #98a49d; --line: #2e3531;
+  --accent: #7cc4a0; --accent-bg: #1a2a22; --warn: #e6a36b; --warn-bg: #2b2119; --info-bg: #1a2330; --info: #8fb6e0; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+.wrap { max-width: 780px; margin: 0 auto; padding-block: 32px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 44px; }
+h1 { font: 600 2.1rem/1.12 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.4rem/1.25 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 1.02rem/1.3 var(--body); margin: 0; }
+.eyebrow { font: 500 .74rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 16px; min-width: 0; }
+p, ul, ol { margin: 0; } ul, ol { padding-left: 1.25rem; display: grid; gap: 6px; }
+.lead { font-size: 1.08rem; }
+.muted { color: var(--muted); }
+.small { font-size: .92rem; }
+.box { border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; }
+.box.ok { background: var(--accent-bg); border-left: 3px solid var(--accent); }
+.box.warn { background: var(--warn-bg); border-left: 3px solid var(--warn); }
+.box.info { background: var(--info-bg); border-left: 3px solid var(--info); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.asiento { font: .88rem/1.7 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; overflow-x: auto; white-space: pre; margin: 0; }
+.asiento .h { color: var(--muted); }
+code { font-family: var(--mono); font-size: .88em; }
+.steps { list-style: none; padding: 0; display: grid; gap: 0; counter-reset: s; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 0 14px; padding-bottom: 22px; position: relative; }
+.steps > li::before { content: counter(s); grid-row: 1 / span 2; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--accent); color: var(--accent); font: 600 .9rem/27px var(--mono); text-align: center; }
+.steps > li::after { content: ""; position: absolute; left: 15px; top: 32px; bottom: 2px; width: 1.5px; background: var(--line); }
+.steps > li:last-child::after { display: none; }
+.steps > li > div { display: grid; gap: 8px; min-width: 0; }
+.where { font: 500 .72rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.chip { display: inline-block; font: 500 .74rem/1 var(--body); padding: 4px 8px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
+.chip.a { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.chip.b { background: var(--info-bg); color: var(--info); border-color: transparent; }
+.chip.c { background: var(--accent-bg); color: var(--accent); border-color: transparent; }
+.mock { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.mock table { min-width: 560px; }
+.mock caption { text-align: left; padding: 12px 12px 4px; font-weight: 600; }
+.phases { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.phase { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.phase ul { font-size: .93rem; }
+.q { list-style: none; padding: 0; display: grid; gap: 10px; }
+.q li { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; }
+.q b { display: block; }
+.q li.done { background: transparent; border-style: dashed; color: var(--muted); }
+.q li.done b { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Alto Rancho · POS de locales · propuesta 17/11/2026 · v3</div>
+    <h1>Propuesta de cobros y cajas</h1>
+    <p class="lead">Administración verifica y concilia los cobros de cada local en nuestro POS. Odoo recibe los asientos ya conciliados, directo a cada caja contable.</p>
+  </header>
+
+  <section>
+    <h2>La idea</h2>
+    <div class="box ok">
+      <p><b>La conciliación se hace en el POS, no en Odoo.</b> En la venta solo se factura. El cobro se manda a Odoo recién cuando administración lo verificó en el POS, y va directo a su caja contable contra Deudores por ventas.</p>
+    </div>
+    <div class="asiento"><span class="h">Venta: factura              Debe      Haber</span>
+Deudores por ventas           100
+  IVA débito fiscal                      21
+  Venta de mercadería                    79
+
+<span class="h">Verificado en el POS        Debe      Haber</span>
+Caja Las Lomas  (o Mercado Pago)  100
+  Deudores por ventas                   100</div>
+    <ul>
+      <li>No se usa "Deudores por ventas (PoS)", ni "Recibos pendientes", ni "Cuenta transitoria" para los cobros del local.</li>
+      <li>Lo que todavía no se verificó queda en Deudores por ventas, con su factura. Es la lista de lo pendiente, a la vista en el POS.</li>
+      <li>Cada cobro lleva el número de venta del POS y, si es Mercado Pago, el número de operación.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Los cuatro medios de pago</h2>
+    <div class="tbl"><table>
+      <tr><th>Medio</th><th>Factura</th><th>Va a (Odoo)</th><th>Se verifica en el POS con</th><th>Cuándo</th></tr>
+      <tr><td><b>Caja con factura</b></td><td>Fiscal del local</td><td>Caja Las Lomas / Belgrano / Alcorta</td><td>Cierre de caja</td><td>Al cierre del día</td></tr>
+      <tr><td><b>Caja sin factura</b></td><td>Venta interna (VINTE)</td><td>Caja Interna del local</td><td>Cierre de caja</td><td>Al cierre del día</td></tr>
+      <tr><td><b>MP posnet</b> (tarjeta o QR)</td><td>Fiscal del local</td><td>Mercado Pago</td><td>Cobros del posnet de ese local en Mercado Pago</td><td>Al día siguiente</td></tr>
+      <tr><td><b>MP transferencia</b></td><td>Fiscal del local</td><td>Mercado Pago</td><td>Transferencias recibidas en Mercado Pago, por n° de operación</td><td>Al día siguiente</td></tr>
+    </table></div>
+    <p class="small muted">No hace falta esperar a que Mercado Pago libere la plata. El cobro aparece en la cuenta apenas se aprueba; lo que demora (7 a 19 días en posnet) es la liberación del dinero, que es otro tema.</p>
+  </section>
+
+  <section>
+    <h2>El circuito, paso a paso</h2>
+    <ol class="steps">
+      <li><div>
+        <span class="where">Local · POS</span>
+        <h3>Venta</h3>
+        <p>El POS factura (o hace la venta interna) y guarda cómo se pagó. Para Mercado Pago, el cajero carga el número de operación del ticket del posnet o del comprobante de la transferencia. A Odoo va solo la factura.</p>
+      </div></li>
+      <li><div>
+        <span class="where">Local · POS</span>
+        <h3>Cierre de caja y retiro diario</h3>
+        <p>El cajero cuenta el efectivo. El POS tiene fondo, cobros en efectivo, gastos y el retiro del día. Queda para que administración lo verifique.</p>
+      </div></li>
+      <li><div>
+        <span class="where">Administración · POS → Odoo</span>
+        <h3>Verificación del efectivo</h3>
+        <p>Administración abre la caja de cada local y día, tilda cobro por cobro, corrige lo que no da exacto y aprueba. Al aprobar, el POS manda a Odoo, todo ya conciliado:</p>
+        <ul>
+          <li>cada cobro, a la caja del local contra la factura (la factura queda pagada);</li>
+          <li>cada gasto, a su cuenta (de una lista cerrada en el POS);</li>
+          <li>el retiro, a la caja central: <b>Caja Mayorista Pesos</b> (con factura, "blanca") o <b>Caja Interna</b> (sin factura, "negra");</li>
+          <li>el faltante, a "Pérdida por diferencia de efectivo".</li>
+        </ul>
+<pre class="asiento"><span class="h">Retiro diario sin factura   Debe      Haber</span>
+Caja Interna                  240
+  Caja Interna Las Lomas                240
+
+<span class="h">Retiro diario con factura   Debe      Haber</span>
+Caja Mayorista Pesos           80
+  Caja Las Lomas                         80
+
+<span class="h">Faltante                    Debe      Haber</span>
+Pérdida dif. de efectivo        2
+  Caja Las Lomas                          2</pre>
+        <p class="small muted">Si el contado da de más, el POS no lo registra como sobrante: lo marca para revisar (suele ser una venta o un gasto mal cargado).</p>
+      </div></li>
+      <li><div>
+        <span class="where">Administración · POS → Odoo</span>
+        <h3>Verificación de Mercado Pago</h3>
+        <p>Al día siguiente, el POS trae los cobros de Mercado Pago de cada local y los cruza solos con los cobros del POS: posnet por local, monto y hora (con el n° de operación para confirmar); transferencias por n° de operación. Administración ve qué coincide, qué no, y aprueba. Al aprobar, el POS concilia en Odoo cada movimiento con su factura.</p>
+<pre class="asiento"><span class="h">Mercado Pago verificado     Debe      Haber</span>
+Mercado Pago                  100
+  Deudores por ventas                   100</pre>
+        <p class="small muted">Comisiones, retenciones e impuestos, y los cobros de otros canales (web, mayorista), no pasan por el POS: siguen como hoy en Odoo.</p>
+      </div></li>
+      <li><div>
+        <span class="where">Administración · POS</span>
+        <h3>Balance del local por día</h3>
+        <p>Cada local y día con sus cuatro medios: cobrado, verificado y pendiente. Un día está cerrado cuando no queda nada pendiente.</p>
+      </div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Mercado Pago: de dónde salen los movimientos</h2>
+    <p>La cuenta de Mercado Pago es una sola para todos los canales, y hoy administración importa el extracto completo a Odoo todos los días. Para no duplicar plata en la cuenta, el POS no crea movimientos nuevos de Mercado Pago: concilia los que ya están.</p>
+    <div class="tbl"><table>
+      <tr><th>Opción</th><th>Cómo</th><th>Para cuándo</th></tr>
+      <tr><td><b>A. Leer el extracto que ya está en Odoo</b></td><td>Administración sigue importando como hoy. El POS lee las líneas <code>Cobro 188985161099</code> de Odoo y les pide a Mercado Pago el detalle de ese cobro (posnet y local) para cruzarlas. Después las concilia en Odoo.</td><td>Para arrancar</td></tr>
+      <tr><td><b>B. Traerlos de la API de Mercado Pago</b></td><td>El POS baja los cobros directo de Mercado Pago. Cada cobro trae comisión, costo de cuotas y retenciones, así que el POS también podría cargar esos gastos en Odoo. Hay que definir cómo quedan los otros canales para dejar de importar a mano.</td><td>Más adelante</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Lo que vimos en Mercado Pago</h2>
+    <p>Revisamos la cuenta de Alto Rancho por API, últimos 30 días (sin modificar nada).</p>
+    <ul>
+      <li>El número de la línea del extracto es el ID del cobro en Mercado Pago: <code>Cobro 188985161099</code> se encuentra por API con todo su detalle. El cruce por número de operación funciona.</li>
+      <li>Cada posnet está asignado a su local en Mercado Pago, así que cada cobro de posnet ya dice de qué local es. El cajero no tiene que acertar el número para que el cobro quede bien asignado.</li>
+      <li>El posnet también cobra con QR. Esos cobros aparecen como otro tipo, pero del mismo posnet y local: se tratan como "MP posnet".</li>
+      <li>Las transferencias no traen local ni referencia: solo monto, hora y CUIT del que paga. Llegan unas 820 por mes por todos los canales. Para estas el número de operación sí es necesario.</li>
+      <li>Cada cobro trae el neto, la comisión, el costo de cuotas y las retenciones (IIBB, débitos y créditos). Sirve para la opción B.</li>
+    </ul>
+    <div class="tbl"><table>
+      <tr><th>Local</th><th>Posnets</th><th style="text-align:right">Cobros 30 días</th><th style="text-align:right">Monto ($)</th></tr>
+      <tr><td>Las Lomas</td><td><code>…3269611</code></td><td class="num">120</td><td class="num">54.940.303</td></tr>
+      <tr><td>Belgrano</td><td><code>…0041304</code>, <code>…3269617</code></td><td class="num">128</td><td class="num">42.298.052</td></tr>
+      <tr><td>Alcorta</td><td><code>…0041266</code></td><td class="num">63</td><td class="num">5.115.482</td></tr>
+    </table></div>
+    <p class="small muted">Cobros aprobados con tarjeta o QR en el posnet, del 18/10 al 17/11/2026. La cuenta también tiene locales de Tigre, Feria y Showroom cargados.</p>
+  </section>
+
+  <section>
+    <h2>La pantalla de administración</h2>
+    <p>Ejemplo ilustrativo, con montos inventados.</p>
+    <div class="mock"><table>
+      <caption>Cajas del día · lunes 17/11</caption>
+      <tr><th>Local</th><th style="text-align:right">Caja c/fact.</th><th style="text-align:right">Caja s/fact.</th><th style="text-align:right">MP posnet</th><th style="text-align:right">MP transf.</th><th>Estado</th></tr>
+      <tr><td>Las Lomas</td><td class="num">120.000</td><td class="num">412.000</td><td class="num">1.320.500</td><td class="num">203.081</td><td><span class="chip c">Cerrado</span></td></tr>
+      <tr><td>Belgrano</td><td class="num">480.000</td><td class="num">1.750.000</td><td class="num">2.104.300</td><td class="num">96.000</td><td><span class="chip a">Efectivo para verificar</span></td></tr>
+      <tr><td>Alcorta</td><td class="num">58.400</td><td class="num">0</td><td class="num">874.950</td><td class="num">0</td><td><span class="chip b">MP para verificar</span></td></tr>
+    </table></div>
+    <ul>
+      <li><b>Efectivo:</b> cada cobro, gasto y retiro con su tilde y un campo para corregir el monto; abajo la diferencia y "Aprobar caja".</li>
+      <li><b>Mercado Pago:</b> cobros del POS al lado de los movimientos, ya cruzados; en rojo lo que no coincide; "Aprobar".</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Qué cambia para cada uno</h2>
+    <div class="tbl"><table>
+      <tr><th>Quién</th><th>Qué cambia</th></tr>
+      <tr><td>Cajero</td><td>Elige "MP posnet" o "MP transferencia" y carga el número de operación (en transferencia es obligatorio). Cierra la caja y hace el retiro como hoy.</td></tr>
+      <tr><td>Administración</td><td>Verifica y aprueba efectivo y Mercado Pago de los locales desde el POS. En Odoo ya no concilia los cobros de los locales; sigue con comisiones, retenciones y otros canales.</td></tr>
+      <tr><td>Facturación</td><td>Una factura por venta. Queda "no pagada" hasta que se verifica el cobro: el mismo día para efectivo, al día siguiente para Mercado Pago.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Cómo lo hacemos</h2>
+    <div class="phases">
+      <div class="phase">
+        <span class="chip a" style="justify-self:start">Etapa 1</span>
+        <h3>Ordenar los cobros</h3>
+        <ul>
+          <li>Medios "MP posnet" y "MP transferencia" (hoy transferencia va a Galicia).</li>
+          <li>Campo "N° de operación" en caja.</li>
+          <li>En la venta, el POS deja de registrar el cobro en Odoo: solo factura.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <span class="chip b" style="justify-self:start">Etapa 2</span>
+        <h3>Efectivo desde el POS</h3>
+        <ul>
+          <li>Pantalla "Cajas del día" en Admin.</li>
+          <li>Aprobar caja: cobros, gastos, retiro (a Caja Mayorista Pesos o Caja Interna) y faltante a Odoo, ya conciliados.</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <span class="chip c" style="justify-self:start">Etapa 3</span>
+        <h3>Mercado Pago desde el POS</h3>
+        <ul>
+          <li>Prueba técnica: conciliar por API una línea del extracto de Mercado Pago en Odoo.</li>
+          <li>Cruce automático (posnet por local, monto y hora; transferencias por número) y aprobación.</li>
+          <li>Después: movimientos y comisiones directo de la API (opción B).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Lo que vimos en Odoo</h2>
+    <ul>
+      <li>Odoo 16 con Contabilidad (Enterprise). El efectivo se puede mandar ya conciliado sin problema. Conciliar por API las líneas del extracto de Mercado Pago hay que probarlo antes (etapa 3).</li>
+      <li>El extracto de Mercado Pago ya trae el número de operación: <code>Cobro 188985161099</code>.</li>
+      <li>Últimos 30 días en el diario de Mercado Pago: 3.822 líneas conciliadas y 859 sin conciliar.</li>
+      <li>Los retiros diarios del POS de Odoo ("CIERRE EFECTIVO", "CIERRE CAJA INTERNA") quedan en "Cuenta transitoria" sin conciliar: no se ve a qué caja llegaron.</li>
+      <li>En los últimos 30 días Odoo registró 47 sobrantes en las cajas internas (Belgrano $ 731.482, Las Lomas $ 412.088, Alcorta $ 13.770). Si nunca sobra plata, son errores de carga o de conteo que hoy pasan sin revisión.</li>
+      <li>Nuestro POS todavía no registra cobros en producción; se puede arrancar con este esquema desde el principio.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Para definir</h2>
+    <ul class="q">
+      <li class="done"><b>Cajas centrales · resuelto</b>El retiro sin factura va a "Caja Interna" y el retiro con factura a "Caja Mayorista Pesos".</li>
+      <li><b>N° de operación en transferencias</b>El comprobante que muestra el cliente viene de su banco o billetera. ¿Trae el número de Mercado Pago? Hay que probar con algunas transferencias reales en el local.</li>
+      <li><b>Gastos</b>Hoy usan, por ejemplo, Artículos de librería (5.3.1.01.120), Gastos de almacén (5.2.1.01.140) y Mantenimiento y limpieza (5.1.2.01.120). ¿Armamos la lista cerrada del POS con esas y cuáles más?</li>
+      <li><b>Quién aprueba</b>¿Qué usuarios de administración pueden aprobar cajas y Mercado Pago?</li>
+      <li><b>Factura "no pagada"</b>¿A facturación le sirve que la factura figure no pagada hasta la verificación (horas en efectivo, un día en Mercado Pago)?</li>
+    </ul>
+  </section>
+</div>
