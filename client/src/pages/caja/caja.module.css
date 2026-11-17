@@ -231,6 +231,7 @@
 .blockTitle { font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
 .kindTag { display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 6px; background: var(--wash-2); color: var(--ink-2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .kindTagReturn { background: var(--sent-bg); color: var(--sent); }
+.kindTagDone { background: var(--done-bg); color: var(--done); }
 .numberCell { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .receipt { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); border-radius: var(--r-lg); background: var(--done-bg); color: var(--done); }
 .receipt h3 { font-size: var(--fs-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }

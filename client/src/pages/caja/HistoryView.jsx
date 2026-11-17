@@ -3,7 +3,7 @@ import { api } from '../../lib/api.js';
 import { formatMoney } from '../../lib/labels.js';
 import { formatDateTime, monthOptions } from '../../lib/format.js';
 import { EmptyState, Notice, OrderStatusChip } from '../../components/ui.jsx';
-import { KindTag } from './lineParts.jsx';
+import { KindTag, DeliveryTags, DELIVERY_TAG_FILTERS, deliveryTagsOf } from './lineParts.jsx';
 import styles from './caja.module.css';
 
 const STATUS_FILTERS = [
@@ -29,6 +29,7 @@ export default function HistoryView({ config, scope, onOpen }) {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('todos');
   const [kind, setKind] = useState('todas');
+  const [delivery, setDelivery] = useState('todas');
   const [search, setSearch] = useState('');
   const seq = useRef(0);
 
@@ -60,13 +61,14 @@ export default function HistoryView({ config, scope, onOpen }) {
     return orders
       .filter((o) => status === 'todos' || o.status === status)
       .filter((o) => kind === 'todas' || (o.kind ?? 'venta') === kind)
+      .filter((o) => delivery === 'todas' || deliveryTagsOf(o).includes(delivery))
       .filter((o) => !q
         || (o.number ?? '').toLowerCase().includes(q)
         || (o.odooOrderName ?? '').toLowerCase().includes(q)
         || (o.invoiceName ?? '').toLowerCase().includes(q)
         || (o.customer?.name ?? '').toLowerCase().includes(q)
         || (o.customer?.docNumber ?? '').includes(q));
-  }, [orders, status, kind, search]);
+  }, [orders, status, kind, delivery, search]);
 
   return (
     <div className={styles.view}>
@@ -80,6 +82,12 @@ export default function HistoryView({ config, scope, onOpen }) {
             <span className={styles.muted}>Tipo</span>
             <select className="select" aria-label="Tipo de operación" value={kind} onChange={(e) => setKind(e.target.value)}>
               {KIND_FILTERS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+            </select>
+          </label>
+          <label className={styles.toolbar}>
+            <span className={styles.muted}>Entrega</span>
+            <select className="select" aria-label="Entrega" value={delivery} onChange={(e) => setDelivery(e.target.value)}>
+              {DELIVERY_TAG_FILTERS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
             </select>
           </label>
           <input className={`input ${styles.searchInput}`} type="search" placeholder="Número, cliente, S0… o factura" aria-label="Buscar venta" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -109,7 +117,7 @@ export default function HistoryView({ config, scope, onOpen }) {
             <tbody>
               {visible.map((o) => (
                 <tr key={o.id} tabIndex={0} onClick={() => onOpen(o.id)} onKeyDown={(e) => { if (e.key === 'Enter') onOpen(o.id); }}>
-                  <td className="num"><span className={styles.numberCell}><strong>{o.number}</strong><KindTag kind={o.kind} /></span></td>
+                  <td className="num"><span className={styles.numberCell}><strong>{o.number}</strong><KindTag kind={o.kind} /><DeliveryTags order={o} /></span></td>
                   <td className="num">{formatDateTime(o.confirmedAt ?? o.sentAt ?? o.createdAt)}</td>
                   <td>{o.sellerName}</td>
                   <td>{o.customer?.name ?? '—'}</td>

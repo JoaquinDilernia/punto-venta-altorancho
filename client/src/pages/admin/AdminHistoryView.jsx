@@ -4,7 +4,7 @@ import { formatMoney, ORDER_STATUS } from '../../lib/labels.js';
 import { formatDateTime, monthOptions, toMs } from '../../lib/format.js';
 import { EmptyState, Notice, OrderStatusChip } from '../../components/ui.jsx';
 import { useApiData } from './adminParts.jsx';
-import { KindTag } from '../caja/lineParts.jsx';
+import { KindTag, DeliveryTags, DELIVERY_TAG_FILTERS, deliveryTagsOf } from '../caja/lineParts.jsx';
 import { KIND_LABELS } from '../../lib/returns.js';
 import cajaStyles from '../caja/caja.module.css';
 import styles from './admin.module.css';
@@ -48,6 +48,7 @@ export default function AdminHistoryView() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('todos');
   const [kind, setKind] = useState('todas');
+  const [delivery, setDelivery] = useState('todas');
   const [search, setSearch] = useState('');
   const seq = useRef(0);
 
@@ -78,6 +79,7 @@ export default function AdminHistoryView() {
     return orders
       .filter((o) => status === 'todos' || o.status === status)
       .filter((o) => kind === 'todas' || (o.kind ?? 'venta') === kind)
+      .filter((o) => delivery === 'todas' || deliveryTagsOf(o).includes(delivery))
       .filter((o) => !q
         || (o.number ?? '').toLowerCase().includes(q)
         || (o.odooOrderName ?? '').toLowerCase().includes(q)
@@ -86,7 +88,7 @@ export default function AdminHistoryView() {
         || (o.customer?.name ?? '').toLowerCase().includes(q)
         || (o.customer?.docNumber ?? '').includes(q))
       .sort((a, b) => (saleMs(b) ?? 0) - (saleMs(a) ?? 0));
-  }, [orders, status, kind, search]);
+  }, [orders, status, kind, delivery, search]);
 
   function exportCsv() {
     const header = ['Número', 'Tipo', 'Fecha', 'Local', 'Vendedor', 'Cliente', 'Documento', 'Total', 'Medio de pago', 'Detalle', 'Pedido Odoo', 'Factura', 'Estado'];
@@ -128,6 +130,12 @@ export default function AdminHistoryView() {
               {KIND_FILTERS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
             </select>
           </label>
+          <label className={styles.toolbar}>
+            <span className={styles.muted}>Entrega</span>
+            <select className="select" aria-label="Entrega" value={delivery} onChange={(e) => setDelivery(e.target.value)}>
+              {DELIVERY_TAG_FILTERS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+            </select>
+          </label>
           <input className={`input ${styles.searchInput}`} type="search" placeholder="Número, cliente, vendedor, S0… o factura" aria-label="Buscar venta" value={search} onChange={(e) => setSearch(e.target.value)} />
           <button type="button" className="btn btn-secondary" onClick={load}>Actualizar</button>
           <button type="button" className="btn btn-primary" onClick={exportCsv} disabled={visible.length === 0}>Exportar CSV</button>
@@ -156,7 +164,7 @@ export default function AdminHistoryView() {
             <tbody>
               {visible.map((o) => (
                 <tr key={o.id}>
-                  <td className="num"><span className={cajaStyles.numberCell}><strong>{o.number}</strong><KindTag kind={o.kind} /></span></td>
+                  <td className="num"><span className={cajaStyles.numberCell}><strong>{o.number}</strong><KindTag kind={o.kind} /><DeliveryTags order={o} /></span></td>
                   <td className="num">{formatDateTime(o.confirmedAt ?? o.sentAt ?? o.createdAt)}</td>
                   <td>{localName(o.localId)}</td>
                   <td>{o.sellerName}</td>

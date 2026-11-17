@@ -8,6 +8,33 @@ import styles from './caja.module.css';
 
 export const activeLinesOf = (order) => (order?.lines ?? []).filter((l) => l.status !== 'eliminado');
 
+// Etiquetas de entrega del listado de ventas. "Entregado" = todo se entregó en
+// el acto (envíos y retiros se entregan en Odoo y la app todavía no lo lee).
+export const DELIVERY_TAG_FILTERS = [
+  { value: 'todas', label: 'Todas' },
+  { value: 'envio', label: 'Envío a domicilio' },
+  { value: 'retiro', label: 'Retiro en local' },
+  { value: 'entregado', label: 'Entregado' },
+];
+const DELIVERY_TAG_LABELS = Object.fromEntries(DELIVERY_TAG_FILTERS.map((f) => [f.value, f.label]));
+const PICKUPS = ['retira_local', 'retira_otro_local', 'retira_rolon'];
+
+export function deliveryTagsOf(order) {
+  const lines = activeLinesOf(order);
+  if (!lines.length) return [];
+  const tags = [];
+  if (lines.some((l) => l.delivery === 'envio')) tags.push('envio');
+  if (lines.some((l) => PICKUPS.includes(l.delivery))) tags.push('retiro');
+  if (lines.every((l) => l.status === 'entregado')) tags.push('entregado');
+  return tags;
+}
+
+export function DeliveryTags({ order }) {
+  return deliveryTagsOf(order).map((t) => (
+    <span key={t} className={`${styles.kindTag} ${t === 'entregado' ? styles.kindTagDone : ''}`}>{DELIVERY_TAG_LABELS[t]}</span>
+  ));
+}
+
 export const lineBody = (v) => ({
   productId: v.productId, qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId,
 });
