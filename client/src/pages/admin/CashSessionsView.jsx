@@ -5,7 +5,7 @@ import { Chip, EmptyState, Notice } from '../../components/ui.jsx';
 import { useApiData } from './adminParts.jsx';
 import styles from './admin.module.css';
 
-const TYPE_LABELS = { gasto: 'Gasto', retiro: 'Retiro', ingreso_usd: 'Dólares' };
+const TYPE_LABELS = { gasto: 'Gasto', retiro: 'Retiro', ingreso_usd: 'Dólares', traspaso: 'Entre cajas' };
 const usd = (n) => `US$ ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(n ?? 0)}`;
 
 function Detail({ session, methodName }) {

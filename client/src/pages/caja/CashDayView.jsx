@@ -8,7 +8,10 @@ import styles from './caja.module.css';
 
 const REFRESH_MS = 15 * 1000;
 const EXPENSE_SHORTCUTS = ['Comida', 'Librería', 'Limpieza', 'Transporte'];
-const TYPE_LABELS = { gasto: 'Gasto', retiro: 'Retiro', ingreso_usd: 'Dólares' };
+const TYPE_LABELS = { gasto: 'Gasto', retiro: 'Retiro', ingreso_usd: 'Dólares', traspaso: 'Entre cajas' };
+// Movimiento entre la caja con factura y la sin factura: no saca plata del cajón.
+const DIRECTIONS = { a_interna: 'Con factura → sin factura', a_fiscal: 'Sin factura → con factura' };
+const movementSign = (m) => (m.type === 'ingreso_usd' || m.type === 'traspaso' ? '' : '− ');
 const usd = (n) => `US$ ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(n ?? 0)}`;
 
 function diffText(diff) {
@@ -70,6 +73,18 @@ function Summary({ summary, config }) {
         <dt>Efectivo que tiene que haber <span className={styles.muted}>(fondo + ventas en efectivo − reintegros en efectivo − gastos − retiros)</span></dt>
         <dd className="num">{formatMoney(summary.expectedCash)}</dd>
       </div>
+      {summary.boxes && (
+        <>
+          <div className={styles.summarySub}>
+            <dt>Ventas en efectivo con factura <span className={styles.muted}>(± movimientos entre cajas)</span></dt>
+            <dd className="num">{formatMoney(summary.boxes.fiscal)}</dd>
+          </div>
+          <div className={styles.summarySub}>
+            <dt>Ventas en efectivo sin factura <span className={styles.muted}>(± movimientos entre cajas)</span></dt>
+            <dd className="num">{formatMoney(summary.boxes.internal)}</dd>
+          </div>
+        </>
+      )}
       {summary.countedCash != null && (
         <>
           <div><dt>Efectivo contado</dt><dd className="num">{formatMoney(summary.countedCash)}</dd></div>
@@ -95,7 +110,7 @@ function Movements({ movements, busy, voidId, onAskVoid, onVoid, onCancelVoid })
               {m.voidedAt ? ` · anulado por ${m.voidedBy}` : ''}
             </span>
           </span>
-          <span className="num">{m.type === 'ingreso_usd' ? '' : '− '}{formatMoney(m.amount)}</span>
+          <span className="num">{movementSign(m)}{formatMoney(m.amount)}</span>
           {onVoid && !m.voidedAt && (voidId === m.id ? (
             <span className={styles.rowActions}>
               <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => onVoid(m)}>Sí, anular</button>
@@ -121,7 +136,7 @@ export default function CashDayView({ config, scope, onChanged }) {
   const [countedCash, setCountedCash] = useState('');
   const [confirmClose, setConfirmClose] = useState(false);
   const [notes, setNotes] = useState('');
-  const [movement, setMovement] = useState({ type: 'gasto', concept: '', amount: '', usdAmount: '', rate: '' });
+  const [movement, setMovement] = useState({ type: 'gasto', concept: '', amount: '', usdAmount: '', rate: '', direction: 'a_interna' });
   const [voidId, setVoidId] = useState(null);
   const [busy, setBusy] = useState(false);
   const [closed, setClosed] = useState(null); // resumen de la caja recién cerrada
@@ -190,8 +205,9 @@ export default function CashDayView({ config, scope, onChanged }) {
       body.rate = rate.value;
     } else {
       const amount = parseMoney(movement.amount);
-      if (!amount.ok || amount.value <= 0) { setNotice({ kind: 'error', text: 'Escribí el monto que sale de la caja.' }); return; }
+      if (!amount.ok || amount.value <= 0) { setNotice({ kind: 'error', text: type === 'traspaso' ? 'Escribí el monto que pasa de una caja a la otra.' : 'Escribí el monto que sale de la caja.' }); return; }
       body.amount = amount.value;
+      if (type === 'traspaso') body.direction = movement.direction;
     }
     const ok = await run(() => api('/cash/movements', { method: 'POST', body: { ...body, ...withScope } }), `${TYPE_LABELS[type]} registrado.`);
     if (ok) setMovement((m) => ({ ...m, concept: '', amount: '', usdAmount: '', rate: '' }));
@@ -272,10 +288,19 @@ export default function CashDayView({ config, scope, onChanged }) {
               <div className={styles.segmented} role="radiogroup" aria-label="Tipo de movimiento">
                 {Object.entries(TYPE_LABELS).map(([value, label]) => (
                   <button key={value} type="button" role="radio" aria-checked={movement.type === value} className={movement.type === value ? styles.segmentOn : ''} onClick={() => setMovement((m) => ({ ...m, type: value }))}>
-                    {value === 'retiro' ? 'Retiro de dinero' : value === 'ingreso_usd' ? 'Ingreso en dólares' : label}
+                    {value === 'retiro' ? 'Retiro de dinero' : value === 'ingreso_usd' ? 'Ingreso en dólares' : value === 'traspaso' ? 'Entre cajas' : label}
                   </button>
                 ))}
               </div>
+              {movement.type === 'traspaso' && (
+                <div className={styles.segmented} role="radiogroup" aria-label="Entre qué cajas">
+                  {Object.entries(DIRECTIONS).map(([value, label]) => (
+                    <button key={value} type="button" role="radio" aria-checked={movement.direction === value} className={movement.direction === value ? styles.segmentOn : ''} onClick={() => setMovement((m) => ({ ...m, direction: value }))}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
               {movement.type === 'gasto' && (
                 <div className={styles.rowActions}>
                   {EXPENSE_SHORTCUTS.map((c) => (
