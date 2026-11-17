@@ -18,6 +18,7 @@ export const GAP_MS = 4000;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const activeLines = (order) => (order.lines ?? []).filter((l) => l.status !== 'eliminado');
+const manufactureNote = (l) => (l.toManufacture ? ' · A FABRICAR (30 DÍAS)' : '');
 
 // 58 mm de papel, ~48 mm imprimibles.
 function page(title, body) {
@@ -46,7 +47,7 @@ td + td, th + th { padding-left: 1.5mm; }
 export function saleReceiptHtml(order, ctx) {
   const t = order.totals ?? {};
   const exchange = (order.returnLines ?? []).length > 0;
-  const rows = activeLines(order).map((l) => `<tr><td>${esc(l.qty)} × ${esc(l.name)}<div class="sub">${esc(l.sku)}</div></td><td class="r">${formatMoney(l.qty * l.basePrice)}</td></tr>`).join('');
+  const rows = activeLines(order).map((l) => `<tr><td>${esc(l.qty)} × ${esc(l.name)}<div class="sub">${esc(l.sku)}${manufactureNote(l)}</div></td><td class="r">${formatMoney(l.qty * l.basePrice)}</td></tr>`).join('');
   const row = (label, value, cls = '') => `<tr class="${cls}"><td>${label}</td><td class="r">${value}</td></tr>`;
   const sums = [row('Productos', formatMoney(t.products))];
   if (t.paymentDiscount > 0) sums.push(row(`Desc. medio de pago${t.paymentPct ? ` (${t.paymentPct} %)` : ''}`, `− ${formatMoney(t.paymentDiscount)}`));
@@ -76,7 +77,7 @@ ${order.priceList === 'directorio' ? '<hr class="rule"><p class="note">VENTA A D
 
 // Ticket de cambio: mismo formato que el de Odoo (sin precios).
 export function exchangeTicketHtml(order) {
-  const rows = activeLines(order).map((l) => `<tr><td class="nw">${esc(l.sku)}</td><td>${esc(l.name)}</td><td class="r">${esc(l.qty)}</td></tr>`).join('');
+  const rows = activeLines(order).map((l) => `<tr><td class="nw">${esc(l.sku)}</td><td>${esc(l.name)}${manufactureNote(l)}</td><td class="r">${esc(l.qty)}</td></tr>`).join('');
   return page(`Ticket de cambio ${order.number}`, `
 <div class="head"><p>FECHA: ${dateOf(order)}</p>${order.odooOrderName ? `<p>REF. VENTA: ${esc(order.odooOrderName)}</p>` : ''}<p>Pedido ${esc(order.number)}</p></div>
 <hr class="rule"><table><tr><th>SKU</th><th>ESTILO</th><th class="r">CANT.</th></tr>${rows}</table>

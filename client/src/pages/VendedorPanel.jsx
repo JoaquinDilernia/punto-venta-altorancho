@@ -22,7 +22,7 @@ const activeLinesOf = (cart) => (cart?.lines ?? []).filter((l) => l.status !== '
 function LineSheet({ product, line, locales, ownLocalId, onConfirm, onClose }) {
   const [value, setValue] = useState(() => (product
     ? defaultLineValue(product.stock)
-    : { qty: line.qty, origin: line.origin, delivery: line.delivery, pickupLocalId: line.pickupLocalId ?? null }));
+    : { qty: line.qty, origin: line.origin, delivery: line.delivery, pickupLocalId: line.pickupLocalId ?? null, toManufacture: line.toManufacture === true }));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -81,6 +81,7 @@ function CartLine({ line, localName, busy, onlyLine, onQty, onEdit, onRemove }) 
         <p className={styles.lineMeta}>
           {line.sku} · {ORIGIN_LABELS[line.origin]} · {DELIVERY_LABELS[line.delivery]}
           {line.delivery === 'retira_otro_local' && line.pickupLocalId ? ` (${localName(line.pickupLocalId)})` : ''}
+          {line.toManufacture ? ' · A fabricar (30 días)' : ''}
         </p>
         <p className={`${styles.linePrice} num`}>
           <span>{formatMoney(line.basePrice)} × {line.qty}</span>
@@ -183,7 +184,7 @@ export default function VendedorPanel() {
   }
 
   const lineBody = (v) => ({
-    productId: v.productId, qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId,
+    productId: v.productId, qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId, toManufacture: v.toManufacture === true,
   });
 
   async function addLine(product, v) {
@@ -201,7 +202,7 @@ export default function VendedorPanel() {
   async function editLine(line, v) {
     const order = await api(`/orders/${cart.id}/lines/${line.lineId}`, {
       method: 'PATCH',
-      body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId },
+      body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId, toManufacture: v.toManufacture === true },
     });
     putCart(order);
     setNotice({ kind: 'error', text: '' });

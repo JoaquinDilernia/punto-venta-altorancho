@@ -256,7 +256,7 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   }
   async function editLine(line, v) {
     await api(`/orders/${orderId}/lines/${line.lineId}`, {
-      method: 'PATCH', body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId },
+      method: 'PATCH', body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId, toManufacture: v.toManufacture === true },
     });
     await load();
     setDialog(null);

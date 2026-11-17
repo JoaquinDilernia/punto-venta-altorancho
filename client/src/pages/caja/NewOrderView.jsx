@@ -81,7 +81,7 @@ export default function NewOrderView({ config, localId, scope, onSubmitted }) {
   }
   async function editLine(line, v) {
     setCart(await api(`/orders/${cart.id}/lines/${line.lineId}`, {
-      method: 'PATCH', body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId },
+      method: 'PATCH', body: { qty: v.qty, origin: v.origin, delivery: v.delivery, pickupLocalId: v.pickupLocalId, toManufacture: v.toManufacture === true },
     }));
     setNotice('');
     setDialog(null);

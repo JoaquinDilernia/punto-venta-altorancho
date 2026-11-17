@@ -25,7 +25,7 @@ export function availableFor(stock, origin) {
 // Valores iniciales al agregar un producto: del local si hay, si no Rolón, si no web.
 export function defaultLineValue(stock) {
   const origin = ORIGINS.find((o) => (availableFor(stock, o) ?? 0) > 0) ?? 'stock';
-  return { qty: 1, origin, delivery: fromRolon(origin) ? 'retira_local' : 'ahora', pickupLocalId: null };
+  return { qty: 1, origin, delivery: fromRolon(origin) ? 'retira_local' : 'ahora', pickupLocalId: null, toManufacture: false };
 }
 
 // Formulario de cantidad / origen / entrega / local de retiro. Sirve para
@@ -42,6 +42,11 @@ export default function LineEditor({ stock, locales, ownLocalId, value, onChange
     set({ delivery, pickupLocalId: delivery === 'retira_otro_local' ? value.pickupLocalId : null });
   }
   const setQty = (n) => set({ qty: Math.max(1, Math.floor(Number(n)) || 1) });
+  // A fabricar se entrega a 30 días: no puede ser "Se lo lleva ahora".
+  function setManufacture(on) {
+    set({ toManufacture: on, ...(on && value.delivery === 'ahora' ? { delivery: 'retira_local', pickupLocalId: null } : {}) });
+  }
+  const allowed = (d) => deliveryAllowed(d, value.origin) && !(value.toManufacture && d === 'ahora');
   const others = locales.filter((l) => l.id !== ownLocalId);
 
   return (
@@ -76,7 +81,7 @@ export default function LineEditor({ stock, locales, ownLocalId, value, onChange
         <legend className="field-label">Entrega</legend>
         <div className={styles.options}>
           {DELIVERIES.map((d) => {
-            const disabled = !deliveryAllowed(d, value.origin);
+            const disabled = !allowed(d);
             return (
               <label key={d} className={`${styles.option} ${value.delivery === d ? styles.optionOn : ''} ${disabled ? styles.optionOff : ''}`}>
                 <input type="radio" name="delivery" checked={value.delivery === d} disabled={disabled} onChange={() => setDelivery(d)} />
@@ -86,6 +91,11 @@ export default function LineEditor({ stock, locales, ownLocalId, value, onChange
           })}
         </div>
       </fieldset>
+
+      <label className={`${styles.option} ${value.toManufacture ? styles.optionOn : ''}`}>
+        <input type="checkbox" checked={value.toManufacture === true} onChange={(e) => setManufacture(e.target.checked)} />
+        <span>A fabricar (entrega a 30 días)</span>
+      </label>
 
       {value.delivery === 'retira_otro_local' && (
         <label className="field">
