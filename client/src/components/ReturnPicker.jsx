@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import { formatMoney } from '../lib/labels.js';
-import { SOURCE_LABELS, maxReturnable, defaultDestination, shortDate, lateInfo } from '../lib/returns.js';
+import { SOURCE_LABELS, maxReturnable, defaultDestination, destinationForReason, shortDate, lateInfo } from '../lib/returns.js';
 import { Notice, EmptyState } from './ui.jsx';
 import ProductSearch from './ProductSearch.jsx';
 import styles from './ReturnPicker.module.css';
@@ -66,7 +66,7 @@ function ReturnSheet({ line, config, locale, dialog, error, saving, onConfirm, o
           <span className="field-label">Motivo</span>
           <div className={styles.reasons}>
             {reasons.map((r) => (
-              <button key={r} type="button" className={`btn btn-secondary ${reason === r ? styles.reasonOn : ''}`} aria-pressed={reason === r} onClick={() => setReason(r)}>
+              <button key={r} type="button" className={`btn btn-secondary ${reason === r ? styles.reasonOn : ''}`} aria-pressed={reason === r} onClick={() => { setReason(r); setDestinationId((cur) => destinationForReason(locale, r, cur)); }}>
                 {reason === r && <span aria-hidden="true">✓ </span>}{r}
               </button>
             ))}

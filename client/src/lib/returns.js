@@ -10,6 +10,14 @@ export function defaultDestination(locale) {
   return (locale?.returnDestinations ?? []).find((d) => d.default)?.id ?? locale?.returnDestinations?.[0]?.id ?? '';
 }
 
+// Motivo "Falla": va al destino de fallas del local (el que se llama "Fallas",
+// "Fallados"…), si tiene uno. Si no, queda el destino elegido.
+const FALLA = /fall/i;
+export function destinationForReason(locale, reason, current) {
+  if (!FALLA.test(reason ?? '')) return current;
+  return (locale?.returnDestinations ?? []).find((d) => d.active !== false && (FALLA.test(d.label ?? '') || FALLA.test(d.id ?? '')))?.id ?? current;
+}
+
 export function returnBody(purchase, purchaseLine, values) {
   return {
     purchase: { source: purchaseLine.source, purchaseId: purchaseLine.purchaseId, purchaseLineId: purchaseLine.purchaseLineId, productId: purchaseLine.productId },
