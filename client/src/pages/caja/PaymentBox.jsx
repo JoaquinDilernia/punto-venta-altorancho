@@ -195,7 +195,7 @@ export default function PaymentBox({
   const noun = CONFIRM_NOUN[order.kind] ?? 'venta';
   // Sin factura se cobra solo en efectivo (el servidor también lo valida).
   const cashOnly = noPayment || (saved.length > 0 && saved.every((p) => p.methodId === CASH_ONLY_METHOD));
-  const noInvoiceBlocked = !cashOnly && !directorio;
+  const noInvoiceBlocked = (!cashOnly && !directorio) || invoiceHint;
   return (
     <aside className={styles.payBox} aria-label="Cobro">
       <div className={styles.payBody}>
@@ -378,8 +378,9 @@ export default function PaymentBox({
                 <button type="button" className="btn btn-secondary btn-lg btn-block" disabled={confirmDisabled || noInvoiceBlocked} onClick={() => onConfirm(false)}>
                   {confirming && confirmingWith === false ? 'Confirmando en Odoo…' : `Confirmar ${noun} sin factura`}
                 </button>
-                {noInvoiceBlocked && <p className={styles.hint}>Sin factura: solo con efectivo</p>}
-                {invoiceHint && <p className={styles.hint}>La compra que vuelve tenía factura: conviene con factura, para aplicar la nota de crédito</p>}
+                {invoiceHint
+                  ? <p className={styles.hint}>La compra que vuelve tenía factura: el cambio va con factura y ahí se aplica la nota de crédito</p>
+                  : noInvoiceBlocked && <p className={styles.hint}>Sin factura: solo con efectivo</p>}
               </div>
             ) : (
               <button type="button" className="btn btn-primary btn-lg btn-block" disabled={confirmDisabled} onClick={() => onConfirm(order.status === 'error' ? undefined : false)}>

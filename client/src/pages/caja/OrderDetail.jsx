@@ -216,8 +216,10 @@ export default function OrderDetail({ orderId, localId, config, backLabel, onBac
   // Con el plan de devolución guardado lo que vuelve ya no se toca (backend).
   const returnsEditable = editable && !order?.returnSteps?.plan;
   const net = preview?.totals?.net ?? null;
-  // La compra que vuelve tenía factura y hay algo nuevo: la NC se aplica a la factura nueva.
-  const invoiceHint = exchange && lines.length > 0 && returnLines.some((l) => l.invoiceId);
+  // La compra que vuelve tenía factura (no interna) y hay algo nuevo: el cambio
+  // se confirma con factura y la NC se aplica ahí (el backend también lo exige).
+  const internalJournalIds = config.settings?.internalJournalIds ?? [];
+  const invoiceHint = exchange && lines.length > 0 && returnLines.some((l) => l.invoiceId && !internalJournalIds.includes(l.invoiceJournalId));
   const methodById = useMemo(() => new Map([
     ...(config.paymentMethods ?? []).map((m) => [m.id, m]),
     ...(config.creditMethod ? [[config.creditMethod.id, config.creditMethod]] : []),
