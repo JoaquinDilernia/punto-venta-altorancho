@@ -1,0 +1,7 @@
+.backdrop { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: var(--s-4); background: var(--backdrop); }
+.panel { width: min(100%, 480px); display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-lg); background: var(--paper); color: var(--ink); box-shadow: var(--shadow-3); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.head h2 { font-size: var(--fs-lg); font-weight: 600; margin: 0; }
+.video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-md); background: #000; }
+.hint { margin: 0; color: var(--ink-2); font-size: var(--fs-sm); }
+.error { margin: 0; color: var(--removed); }

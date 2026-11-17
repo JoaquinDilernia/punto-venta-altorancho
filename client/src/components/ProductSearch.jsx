@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import BarcodeScanner from './BarcodeScanner.jsx';
 import { api } from '../lib/api.js';
 import { formatMoney, priceWith } from '../lib/labels.js';
 import { Notice, ProductPhoto } from './ui.jsx';
@@ -16,7 +17,9 @@ export default function ProductSearch({ payMethods, onPick, localId = null, pick
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [scanning, setScanning] = useState(false);
   const seq = useRef(0);
+  const onScanned = useCallback((code) => { setScanning(false); setQuery(code); }, []);
 
   useEffect(() => {
     const q = query.trim();
@@ -56,11 +59,17 @@ export default function ProductSearch({ payMethods, onPick, localId = null, pick
           enterKeyHint="search"
           autoComplete="off"
           aria-label="Buscar productos"
-          placeholder="Buscar por nombre o SKU"
+          placeholder="Buscar por nombre, SKU o código"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <button type="button" className={`btn btn-ghost ${styles.scanBtn}`} onClick={() => setScanning(true)} aria-label="Leer código de barras con la cámara" title="Leer código de barras">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8" />
+          </svg>
+        </button>
       </div>
+      {scanning && <BarcodeScanner onDetected={onScanned} onClose={() => setScanning(false)} />}
       <Notice kind="error">{error}</Notice>
       {short && <p className={styles.hint}>{query.trim() ? `Seguí escribiendo: ${MIN_CHARS} letras o más.` : `Escribí al menos ${MIN_CHARS} letras del nombre o el SKU.`}</p>}
       {!short && loading && <p className={styles.hint}>Buscando…</p>}
