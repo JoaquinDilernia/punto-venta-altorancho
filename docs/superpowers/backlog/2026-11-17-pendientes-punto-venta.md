@@ -16,13 +16,13 @@ entendí y lo que falta preguntar.
       - A definir: ¿es por línea o por pedido? ¿En Odoo va como nota, como
         ruta "Fabricar"/"Comprar" o como etiqueta? ¿Afecta el stock (se puede
         vender sin stock si está marcado)?
-- [ ] **Devolución por falla al depósito de fallas.** Si el motivo de
+- [x] **Devolución por falla al depósito de fallas.** Si el motivo de
       devolución es falla, que la mercadería vaya a la ubicación de fallas.
       - Hecho 17/11 (`3414ac1`): con motivo "Falla" se elige solo el destino
         del local que se llame Fallas/Fallados.
-      - Falta: cargar ese destino en Admin → Locales. En Odoo no hay fallas
-        por local; hay centrales: `Fall/Stock` (192) y `RMA/Fall` (392).
-        ¿Cuál?
+      - Decidido 17/11: `Fall/Stock` (192). Destino "Fallas" en la lista
+        por defecto de todos los locales: entra al stock del local y se
+        traslada a Fall/Stock (como "Enviar a Rolón").
 - [ ] **Devolver lo que todavía no se entregó.** Hoy la app dice "Todavía no
       se entregó: 1 × LAMPARA DE MESA LED INALAMBRICA … — eso se anula, no se
       devuelve". Se tiene que poder devolver igual: cancelar el pick, anular
@@ -36,12 +36,12 @@ entendí y lo que falta preguntar.
       vuelve cada línea (relacionado con el de fallas).
       - Ya existía: "Destino" por línea al devolver; la lista se configura
         por local en Admin → Locales → Destinos de devolución.
-- [ ] **Etiquetas en el listado de ventas:** "Envío a domicilio", "Retiro en
+- [x] **Etiquetas en el listado de ventas:** "Envío a domicilio", "Retiro en
       local", "Entregado".
       - Hecho 17/11 (`a8d6a43`): etiquetas y filtro "Entrega" en el historial
         de caja y de admin. "Entregado" = todo se entregó en el acto.
-      - Falta: "Entregado" para envíos y retiros, leyendo si el remito está
-        validado en Odoo.
+      - Confirmado 17/11: "Entregado" es solo lo que se retira en el momento
+        en el local. No hace falta leer Odoo.
 - [ ] **Movimiento por usuario / vendedor en Odoo.** Que en Odoo se vea qué
       usuario o vendedor hizo cada movimiento.
       - A definir: ¿alcanza con el vendedor en el pedido y en la nota del
@@ -78,11 +78,11 @@ entendí y lo que falta preguntar.
       - A definir: ¿RVENTI es un diario a crear o el nombre de la operación
         de pasar una venta interna a facturada? ¿Se factura todo el cambio o solo lo que paga? ¿Cómo se
         compensa en Odoo: conciliando la reversión contra la factura nueva?
-- [ ] **Los vendedores solo ven montos a pagar.** En el panel del vendedor,
+- [x] **Los vendedores solo ven montos a pagar.** En el panel del vendedor,
       nada de con factura / sin factura ni diarios: solo el monto que paga el
       cliente.
-      - A definir: ¿oculta también el desglose del cambio que se agregó hace
-        poco, o eso se queda?
+      - Confirmado 17/11: como está ahora está bien (ven el detalle, el
+        desglose del cambio y el total a pagar). No hay cambios.
 
 ## Cajas
 

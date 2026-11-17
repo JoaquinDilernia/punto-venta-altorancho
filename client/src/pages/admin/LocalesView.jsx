@@ -6,6 +6,7 @@ import styles from './admin.module.css';
 
 const byId = (list, id) => list?.find((o) => o.id === id);
 const ROLON_STOCK_ID = 174;
+const FALLAS_STOCK_ID = 192; // Fall/Stock
 const numOrNull = (v) => { const n = Number(String(v).trim()); return String(v).trim() === '' || !Number.isInteger(n) || n <= 0 ? null : n; };
 
 // Id de un destino nuevo: sale del nombre y no se repite.
@@ -22,6 +23,7 @@ function usualDestinations(f) {
     { id: 'stock', label: 'Stock', locationId: f.stockLocationId, transferToLocationId: null, default: true, active: true },
     { id: 'exhibicion', label: 'Exhibición', locationId: f.exhibicionLocationId, transferToLocationId: null, default: false, active: true },
     { id: 'rolon', label: 'Enviar a Rolón', locationId: f.stockLocationId, transferToLocationId: ROLON_STOCK_ID, default: false, active: true },
+    { id: 'fallas', label: 'Fallas', locationId: f.stockLocationId, transferToLocationId: FALLAS_STOCK_ID, default: false, active: true },
   ];
 }
 
