@@ -4,14 +4,13 @@ Anotado tal cual llegó, en el mismo orden. Falta definir alcance y prioridad
 de cada punto; los vamos detallando de a uno. Debajo de cada uno, lo que
 entendí y lo que falta preguntar.
 
-- [ ] **Tipo de entrega en las notas del pedido y de la transferencia.**
+- [x] **Tipo de entrega en las notas del pedido y de la transferencia.**
       Ejemplo: pedido de venta `S11515`, transferencia `RL/PICK/09409`.
       Agregar en notas "Retiro en local", "Envío" o nada.
-      - Entiendo: al confirmar, escribir el tipo de entrega en la nota del
-        `sale.order` y del picking en Odoo, para que logística lo vea sin
-        abrir la app.
-      - A definir: ¿"nada" es cuando se lo lleva en el momento? ¿Incluir el
-        local de retiro o la dirección de envío, o solo el tipo?
+      - Hecho 17/11 (Reportes `daa8345`): "Envío a domicilio", "Retira en
+        Local X" o nada si se lo lleva en el momento; en el pedido y en sus
+        remitos. Odoo copia la nota del pedido a la factura (Términos y
+        condiciones).
 - [ ] **Pedido a fabricar.** Un check en la línea; se agrega al detalle de la
       compra y a Odoo.
       - A definir: ¿es por línea o por pedido? ¿En Odoo va como nota, como
@@ -19,7 +18,11 @@ entendí y lo que falta preguntar.
         vender sin stock si está marcado)?
 - [ ] **Devolución por falla al depósito de fallas.** Si el motivo de
       devolución es falla, que la mercadería vaya a la ubicación de fallas.
-      - A definir: ubicación exacta en Odoo (¿una por local o una central?).
+      - Hecho 17/11 (`3414ac1`): con motivo "Falla" se elige solo el destino
+        del local que se llame Fallas/Fallados.
+      - Falta: cargar ese destino en Admin → Locales. En Odoo no hay fallas
+        por local; hay centrales: `Fall/Stock` (192) y `RMA/Fall` (392).
+        ¿Cuál?
 - [ ] **Devolver lo que todavía no se entregó.** Hoy la app dice "Todavía no
       se entregó: 1 × LAMPARA DE MESA LED INALAMBRICA … — eso se anula, no se
       devuelve". Se tiene que poder devolver igual: cancelar el pick, anular
@@ -29,14 +32,16 @@ entendí y lo que falta preguntar.
         ¿se cancela igual? ¿"Pendiente" es un estado en la app que logística
         cierra, o una transferencia de devolución abierta en Odoo? ¿Va nota de
         crédito si ya se facturó?
-- [ ] **Devolver a diferentes ubicaciones.** Elegir a qué depósito / ubicación
+- [x] **Devolver a diferentes ubicaciones.** Elegir a qué depósito / ubicación
       vuelve cada línea (relacionado con el de fallas).
-      - A definir: ¿lista libre de ubicaciones o una lista corta configurable
-        en Admin?
+      - Ya existía: "Destino" por línea al devolver; la lista se configura
+        por local en Admin → Locales → Destinos de devolución.
 - [ ] **Etiquetas en el listado de ventas:** "Envío a domicilio", "Retiro en
       local", "Entregado".
-      - A definir: ¿"Entregado" sale del estado del picking en Odoo (validado)?
-        ¿Filtrar por etiqueta?
+      - Hecho 17/11 (`a8d6a43`): etiquetas y filtro "Entrega" en el historial
+        de caja y de admin. "Entregado" = todo se entregó en el acto.
+      - Falta: "Entregado" para envíos y retiros, leyendo si el remito está
+        validado en Odoo.
 - [ ] **Movimiento por usuario / vendedor en Odoo.** Que en Odoo se vea qué
       usuario o vendedor hizo cada movimiento.
       - A definir: ¿alcanza con el vendedor en el pedido y en la nota del
@@ -48,7 +53,8 @@ entendí y lo que falta preguntar.
 
 ## Venta
 
-- [ ] **Diario de venta interna por local.** Cada local tiene su propio
+- [x] **Diario de venta interna por local.** Hecho 17/11 (Reportes
+      `e5e7222`, front `9df1cbb`). Cada local tiene su propio
       diario de venta sin factura (venta interna). Es solo para compras en
       efectivo.
       - Hoy (backend `../Reportes/backend/posConfig.mjs`): VINTE es un solo
@@ -59,7 +65,7 @@ entendí y lo que falta preguntar.
       - Ya existen en Odoo (revisado 17/11, solo lectura): Las Lomas
         `VINSI` 85, Belgrano `VINBE` 86, Alcorta `VINAL` 87. Precargarlos y
         que se puedan editar en Admin → Locales.
-      - **Listo para arrancar.** Con tests primero; diff antes de commitear.
+      - Se edita en Admin → Locales; vacío = el general de Ajustes (VINTE).
 - [ ] **Devoluciones y cambios según el diario.**
       - Si la venta original fue **con factura** y en el cambio paga la
         diferencia en efectivo, sigue en el diario con factura.
